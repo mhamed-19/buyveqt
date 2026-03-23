@@ -33,23 +33,35 @@ export default function LearnPage() {
 
         {/* Article Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {articles.map((article) => (
-            <Link
-              key={article.slug}
-              href={`/learn/${article.slug}`}
-              className="group block rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 transition-all hover:border-[var(--color-brand)] hover:shadow-md"
-            >
-              <h2 className="text-lg font-semibold text-[var(--color-text-primary)] group-hover:text-[var(--color-brand)] transition-colors leading-snug">
-                {article.title}
-              </h2>
-              <p className="mt-2 text-sm text-[var(--color-text-secondary)] leading-relaxed line-clamp-2">
-                {article.description}
-              </p>
-              <p className="mt-3 text-xs text-[var(--color-text-muted)]">
-                {article.readingTime}
-              </p>
-            </Link>
-          ))}
+          {articles.map((article) => {
+            const isEditorial = article.slug === "why-we-choose-veqt-over-xeqt";
+            return (
+              <Link
+                key={article.slug}
+                href={`/learn/${article.slug}`}
+                className={`group block rounded-xl border p-5 transition-all hover:shadow-md ${
+                  isEditorial
+                    ? "border-[var(--color-brand)]/40 hover:border-[var(--color-brand)]"
+                    : "border-[var(--color-border)] hover:border-[var(--color-brand)]"
+                }`}
+              >
+                {isEditorial && (
+                  <span className="inline-block text-[10px] font-semibold uppercase tracking-wider text-[var(--color-brand)] mb-2">
+                    Our Take
+                  </span>
+                )}
+                <h2 className="text-lg font-semibold text-[var(--color-text-primary)] group-hover:text-[var(--color-brand)] transition-colors leading-snug">
+                  {article.title}
+                </h2>
+                <p className="mt-2 text-sm text-[var(--color-text-secondary)] leading-relaxed line-clamp-2">
+                  {article.description}
+                </p>
+                <p className="mt-3 text-xs text-[var(--color-text-muted)]">
+                  {article.readingTime}
+                </p>
+              </Link>
+            );
+          })}
         </div>
 
         {/* Disclaimer */}
