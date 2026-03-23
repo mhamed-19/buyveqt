@@ -10,30 +10,27 @@ import {
   Cell,
 } from "recharts";
 import { VEQT_SECTOR_ALLOCATION } from "@/data/holdings";
+import { ChartTooltipWrapper, AXIS_PROPS } from "@/lib/chart-utils";
 
 const SECTOR_COLORS = [
   "#2563eb", "#dc2626", "#16a34a", "#f59e0b", "#8b5cf6",
   "#ec4899", "#06b6d4", "#84cc16", "#f97316", "#6366f1", "#14b8a6",
 ];
 
-interface TooltipPayloadItem {
-  value: number;
-  payload: { sector: string };
-}
-
-interface CustomTooltipProps {
+function CustomTooltip({
+  active,
+  payload,
+}: {
   active?: boolean;
-  payload?: TooltipPayloadItem[];
-}
-
-function CustomTooltip({ active, payload }: CustomTooltipProps) {
+  payload?: { value: number; payload: { sector: string } }[];
+}) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 shadow-lg">
+    <ChartTooltipWrapper>
       <p className="text-sm font-medium text-[var(--color-text-primary)]">
         {payload[0].payload.sector}: {payload[0].value}%
       </p>
-    </div>
+    </ChartTooltipWrapper>
   );
 }
 
@@ -49,9 +46,7 @@ export default function SectorChart() {
           type="number"
           domain={[0, 30]}
           tickFormatter={(v: number) => `${v}%`}
-          tick={{ fontSize: 11, fill: "var(--color-text-muted)" }}
-          tickLine={false}
-          axisLine={false}
+          {...AXIS_PROPS}
         />
         <YAxis
           type="category"
