@@ -1,50 +1,9 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import {
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-} from "recharts";
-
-function formatDollars(value: number): string {
-  return "$" + Math.round(value).toLocaleString("en-CA");
-}
-
-interface TooltipPayloadItem {
-  value: number;
-  dataKey: string;
-  payload: { year: number; contributions: number; growth: number; total: number };
-}
-
-function CustomTooltip({
-  active,
-  payload,
-}: {
-  active?: boolean;
-  payload?: TooltipPayloadItem[];
-}) {
-  if (!active || !payload?.length) return null;
-  const d = payload[0].payload;
-  return (
-    <div className="rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 shadow-lg">
-      <p className="text-[11px] text-[var(--color-text-muted)]">Year {d.year}</p>
-      <p className="text-sm font-semibold text-[var(--color-text-primary)]">
-        {formatDollars(d.total)}
-      </p>
-      <p className="text-[11px] text-[var(--color-text-muted)]">
-        Contributed: {formatDollars(d.contributions)}
-      </p>
-      <p className="text-[11px] text-[var(--color-positive)]">
-        Growth: {formatDollars(d.growth)}
-      </p>
-    </div>
-  );
-}
+import { formatDollars } from "@/lib/chart-utils";
+import { CARD } from "@/lib/styles";
+import ContributionGrowthChart from "./ContributionGrowthChart";
 
 export default function TFSARRSPCalculator() {
   const [accountType, setAccountType] = useState<"TFSA" | "RRSP">("TFSA");
@@ -93,7 +52,7 @@ export default function TFSARRSPCalculator() {
     }, [startingBalance, annualContribution, years, returnRate]);
 
   return (
-    <div className="rounded-lg border border-[var(--color-border)] bg-white p-5 sm:p-6">
+    <div className={CARD}>
       <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-1">
         TFSA / RRSP Growth Projector
       </h2>
@@ -218,33 +177,14 @@ export default function TFSARRSPCalculator() {
         </div>
       </div>
 
-      {/* Outputs */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
-        <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-base)] p-4">
-          <p className="text-xs text-[var(--color-text-muted)] uppercase tracking-wider">
-            Total Contributions
-          </p>
-          <p className="text-lg font-semibold tabular-nums mt-1">
-            {formatDollars(totalContributions)}
-          </p>
-        </div>
-        <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-base)] p-4">
-          <p className="text-xs text-[var(--color-text-muted)] uppercase tracking-wider">
-            Est. Portfolio Value
-          </p>
-          <p className="text-lg font-semibold tabular-nums mt-1">
-            {formatDollars(portfolioValue)}
-          </p>
-        </div>
-        <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-base)] p-4">
-          <p className="text-xs text-[var(--color-text-muted)] uppercase tracking-wider">
-            Total Growth
-          </p>
-          <p className="text-lg font-semibold tabular-nums mt-1 text-[var(--color-positive)]">
-            {formatDollars(totalGrowth)}
-          </p>
-        </div>
-      </div>
+      <ContributionGrowthChart
+        chartData={chartData}
+        stats={[
+          { label: "Total Contributions", value: totalContributions },
+          { label: "Est. Portfolio Value", value: portfolioValue },
+          { label: "Total Growth", value: totalGrowth, highlight: true },
+        ]}
+      />
 
       {/* Account type info box */}
       <div className="rounded-lg bg-[var(--color-base)] border border-[var(--color-border)] p-4 mb-6">
@@ -268,50 +208,6 @@ export default function TFSARRSPCalculator() {
             ~$32,490 for 2025).
           </p>
         )}
-      </div>
-
-      {/* Chart */}
-      <div className="mb-6">
-        <ResponsiveContainer width="100%" height={300}>
-          <AreaChart data={chartData}>
-            <CartesianGrid
-              strokeDasharray="3 3"
-              stroke="var(--color-border)"
-              vertical={false}
-            />
-            <XAxis
-              dataKey="year"
-              tick={{ fontSize: 11, fill: "var(--color-text-muted)" }}
-              tickLine={false}
-              axisLine={false}
-              tickFormatter={(v: number) => (v === 0 ? "0" : `${v}`)}
-            />
-            <YAxis
-              tickFormatter={(v: number) => formatDollars(v)}
-              tick={{ fontSize: 11, fill: "var(--color-text-muted)" }}
-              tickLine={false}
-              axisLine={false}
-              width={70}
-            />
-            <Tooltip content={<CustomTooltip />} />
-            <Area
-              type="monotone"
-              dataKey="contributions"
-              stackId="1"
-              stroke="#d1d5db"
-              fill="#e5e7eb"
-              fillOpacity={1}
-            />
-            <Area
-              type="monotone"
-              dataKey="growth"
-              stackId="1"
-              stroke="var(--color-brand)"
-              fill="var(--color-brand)"
-              fillOpacity={0.25}
-            />
-          </AreaChart>
-        </ResponsiveContainer>
       </div>
 
       {/* Notes */}

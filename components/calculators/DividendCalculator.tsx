@@ -11,39 +11,31 @@ import {
   CartesianGrid,
 } from "recharts";
 import Link from "next/link";
-
-function formatDollars(value: number): string {
-  if (value < 100) return "$" + value.toFixed(2);
-  return "$" + Math.round(value).toLocaleString("en-CA");
-}
+import { formatDollars, ChartTooltipWrapper, GRID_PROPS, AXIS_PROPS } from "@/lib/chart-utils";
+import { CARD, STAT_CARD } from "@/lib/styles";
 
 const MONTHS = [
   "Jan", "Feb", "Mar", "Apr", "May", "Jun",
   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
 ];
 
-interface TooltipPayloadItem {
-  value: number;
-  payload: { month: string };
-}
-
 function CustomTooltip({
   active,
   payload,
 }: {
   active?: boolean;
-  payload?: TooltipPayloadItem[];
+  payload?: { value: number; payload: { month: string } }[];
 }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 shadow-lg">
+    <ChartTooltipWrapper>
       <p className="text-[11px] text-[var(--color-text-muted)]">
         {payload[0].payload.month}
       </p>
       <p className="text-sm font-semibold text-[var(--color-text-primary)]">
         {formatDollars(payload[0].value)}
       </p>
-    </div>
+    </ChartTooltipWrapper>
   );
 }
 
@@ -60,7 +52,7 @@ export default function DividendCalculator() {
   }, [portfolio, yieldRate]);
 
   return (
-    <div className="rounded-lg border border-[var(--color-border)] bg-white p-5 sm:p-6">
+    <div className={CARD}>
       <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-1">
         Dividend Income Estimator
       </h2>
@@ -124,53 +116,31 @@ export default function DividendCalculator() {
 
       {/* Outputs */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
-        <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-base)] p-4">
-          <p className="text-xs text-[var(--color-text-muted)] uppercase tracking-wider">
-            Est. Annual Income
-          </p>
-          <p className="text-lg font-semibold tabular-nums mt-1">
-            {formatDollars(annual)}
-          </p>
-        </div>
-        <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-base)] p-4">
-          <p className="text-xs text-[var(--color-text-muted)] uppercase tracking-wider">
-            Est. Quarterly
-          </p>
-          <p className="text-lg font-semibold tabular-nums mt-1">
-            {formatDollars(quarterly)}
-          </p>
-        </div>
-        <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-base)] p-4">
-          <p className="text-xs text-[var(--color-text-muted)] uppercase tracking-wider">
-            Est. Monthly
-          </p>
-          <p className="text-lg font-semibold tabular-nums mt-1">
-            {formatDollars(monthly)}
-          </p>
-        </div>
+        {[
+          { label: "Est. Annual Income", value: annual },
+          { label: "Est. Quarterly", value: quarterly },
+          { label: "Est. Monthly", value: monthly },
+        ].map((s) => (
+          <div key={s.label} className={STAT_CARD}>
+            <p className="text-xs text-[var(--color-text-muted)] uppercase tracking-wider">
+              {s.label}
+            </p>
+            <p className="text-lg font-semibold tabular-nums mt-1">
+              {formatDollars(s.value)}
+            </p>
+          </div>
+        ))}
       </div>
 
       {/* Chart */}
       <div className="mb-6">
         <ResponsiveContainer width="100%" height={220}>
           <BarChart data={chartData}>
-            <CartesianGrid
-              strokeDasharray="3 3"
-              stroke="var(--color-border)"
-              vertical={false}
-            />
-            <XAxis
-              dataKey="month"
-              tick={{ fontSize: 11, fill: "var(--color-text-muted)" }}
-              tickLine={false}
-              axisLine={false}
-              interval={0}
-            />
+            <CartesianGrid {...GRID_PROPS} />
+            <XAxis dataKey="month" {...AXIS_PROPS} interval={0} />
             <YAxis
+              {...AXIS_PROPS}
               tickFormatter={(v: number) => `$${v.toFixed(0)}`}
-              tick={{ fontSize: 11, fill: "var(--color-text-muted)" }}
-              tickLine={false}
-              axisLine={false}
               width={50}
             />
             <Tooltip
