@@ -14,26 +14,23 @@ import Link from "next/link";
 import { formatDollars, ChartTooltipWrapper, GRID_PROPS, AXIS_PROPS } from "@/lib/chart-utils";
 import { CARD, STAT_CARD } from "@/lib/styles";
 
-const MONTHS = [
-  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-];
-
 function CustomTooltip({
   active,
   payload,
 }: {
   active?: boolean;
-  payload?: { value: number; payload: { month: string } }[];
+  payload?: { value: number; payload: { year: string; portfolioValue: number } }[];
 }) {
   if (!active || !payload?.length) return null;
+  const d = payload[0].payload;
   return (
     <ChartTooltipWrapper>
-      <p className="text-[11px] text-[var(--color-text-muted)]">
-        {payload[0].payload.month}
-      </p>
+      <p className="text-[11px] text-[var(--color-text-muted)]">{d.year}</p>
       <p className="text-sm font-semibold text-[var(--color-text-primary)]">
-        {formatDollars(payload[0].value)}
+        {formatDollars(payload[0].value)}/yr
+      </p>
+      <p className="text-[10px] text-[var(--color-text-muted)]">
+        Portfolio: {formatDollars(d.portfolioValue)}
       </p>
     </ChartTooltipWrapper>
   );
@@ -42,14 +39,26 @@ function CustomTooltip({
 export default function DividendCalculator() {
   const [portfolio, setPortfolio] = useState(100000);
   const [yieldRate, setYieldRate] = useState(1.8);
+  const [growthRate, setGrowthRate] = useState(8);
 
   const { annual, quarterly, monthly, chartData } = useMemo(() => {
     const annual = portfolio * (yieldRate / 100);
     const quarterly = annual / 4;
     const monthly = annual / 12;
-    const chartData = MONTHS.map((m) => ({ month: m, income: monthly }));
+
+    // Project dividend income over 20 years as portfolio grows
+    const points = [0, 1, 2, 3, 5, 7, 10, 15, 20];
+    const chartData = points.map((yr) => {
+      const futurePortfolio = portfolio * Math.pow(1 + growthRate / 100, yr);
+      return {
+        year: yr === 0 ? "Now" : `Yr ${yr}`,
+        income: futurePortfolio * (yieldRate / 100),
+        portfolioValue: futurePortfolio,
+      };
+    });
+
     return { annual, quarterly, monthly, chartData };
-  }, [portfolio, yieldRate]);
+  }, [portfolio, yieldRate, growthRate]);
 
   return (
     <div className={CARD}>
@@ -58,11 +67,11 @@ export default function DividendCalculator() {
       </h2>
       <p className="text-sm text-[var(--color-text-muted)] mb-5">
         Estimate how much annual income a VEQT portfolio could generate from
-        distributions.
+        distributions — and how it grows over time.
       </p>
 
       {/* Inputs */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <div>
           <label className="block text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider mb-1.5">
             Portfolio Value
@@ -112,6 +121,29 @@ export default function DividendCalculator() {
             VEQT&apos;s trailing 12-month yield is approximately 1.5–2.0%.
           </p>
         </div>
+
+        <div>
+          <label className="block text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider mb-1.5">
+            Expected Growth
+          </label>
+          <div className="flex items-center gap-3">
+            <input
+              type="range"
+              min={1}
+              max={15}
+              step={0.5}
+              value={growthRate}
+              onChange={(e) => setGrowthRate(Number(e.target.value))}
+              className="flex-1 accent-[var(--color-brand)]"
+            />
+            <span className="text-sm font-medium tabular-nums w-10 text-right">
+              {growthRate}%
+            </span>
+          </div>
+          <p className="text-[10px] text-[var(--color-text-muted)] mt-1">
+            Annual portfolio growth assumption for projection.
+          </p>
+        </div>
       </div>
 
       {/* Outputs */}
@@ -132,16 +164,19 @@ export default function DividendCalculator() {
         ))}
       </div>
 
-      {/* Chart */}
-      <div className="mb-6">
+      {/* Chart — projected dividend income over time */}
+      <div className="mb-2">
+        <p className="text-xs text-[var(--color-text-muted)] mb-2">
+          Projected annual dividend income as your portfolio grows
+        </p>
         <ResponsiveContainer width="100%" height={220}>
           <BarChart data={chartData}>
             <CartesianGrid {...GRID_PROPS} />
-            <XAxis dataKey="month" {...AXIS_PROPS} interval={0} />
+            <XAxis dataKey="year" {...AXIS_PROPS} interval={0} />
             <YAxis
               {...AXIS_PROPS}
-              tickFormatter={(v: number) => `$${v.toFixed(0)}`}
-              width={50}
+              tickFormatter={(v: number) => formatDollars(v)}
+              width={60}
             />
             <Tooltip
               content={<CustomTooltip />}
@@ -151,7 +186,7 @@ export default function DividendCalculator() {
               dataKey="income"
               fill="var(--color-positive)"
               radius={[3, 3, 0, 0]}
-              maxBarSize={32}
+              maxBarSize={36}
             />
           </BarChart>
         </ResponsiveContainer>
