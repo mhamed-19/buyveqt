@@ -11,6 +11,7 @@ import {
 } from "recharts";
 import type { HistoricalDataPoint, ChartPeriod } from "@/lib/types";
 import { CHART_PERIODS } from "@/lib/constants";
+import { ChartTooltipWrapper, GRID_PROPS, AXIS_PROPS } from "@/lib/chart-utils";
 
 interface PriceChartProps {
   data: HistoricalDataPoint[];
@@ -30,21 +31,19 @@ function formatDate(dateStr: string, period: ChartPeriod): string {
   });
 }
 
-interface TooltipPayloadItem {
-  value: number;
-}
-
-interface CustomTooltipProps {
+function CustomTooltip({
+  active,
+  payload,
+  label,
+}: {
   active?: boolean;
-  payload?: TooltipPayloadItem[];
+  payload?: { value: number }[];
   label?: string;
-}
-
-function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
+}) {
   if (!active || !payload?.length || !label) return null;
   const date = new Date(label + "T00:00:00");
   return (
-    <div className="rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 shadow-lg">
+    <ChartTooltipWrapper>
       <p className="text-[11px] text-[var(--color-text-muted)]">
         {date.toLocaleDateString("en-CA", {
           weekday: "short",
@@ -56,7 +55,7 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
       <p className="text-sm font-semibold text-[var(--color-text-primary)]">
         ${payload[0].value.toFixed(2)} CAD
       </p>
-    </div>
+    </ChartTooltipWrapper>
   );
 }
 
@@ -121,26 +120,18 @@ export default function PriceChart({
                   />
                 </linearGradient>
               </defs>
-              <CartesianGrid
-                strokeDasharray="3 3"
-                stroke="var(--color-border)"
-                vertical={false}
-              />
+              <CartesianGrid {...GRID_PROPS} />
               <XAxis
                 dataKey="date"
                 tickFormatter={(d) => formatDate(d, period)}
-                tick={{ fontSize: 11, fill: "var(--color-text-muted)" }}
-                tickLine={false}
-                axisLine={false}
+                {...AXIS_PROPS}
                 interval="preserveStartEnd"
                 minTickGap={50}
               />
               <YAxis
                 domain={[minPrice, maxPrice]}
                 tickFormatter={(v: number) => `$${v}`}
-                tick={{ fontSize: 11, fill: "var(--color-text-muted)" }}
-                tickLine={false}
-                axisLine={false}
+                {...AXIS_PROPS}
                 width={50}
               />
               <Tooltip content={<CustomTooltip />} />

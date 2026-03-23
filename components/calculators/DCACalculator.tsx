@@ -1,50 +1,9 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import {
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-} from "recharts";
-
-function formatDollars(value: number): string {
-  return "$" + Math.round(value).toLocaleString("en-CA");
-}
-
-interface TooltipPayloadItem {
-  value: number;
-  dataKey: string;
-  payload: { year: number; contributions: number; growth: number; total: number };
-}
-
-function CustomTooltip({
-  active,
-  payload,
-}: {
-  active?: boolean;
-  payload?: TooltipPayloadItem[];
-}) {
-  if (!active || !payload?.length) return null;
-  const d = payload[0].payload;
-  return (
-    <div className="rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 shadow-lg">
-      <p className="text-[11px] text-[var(--color-text-muted)]">Year {d.year}</p>
-      <p className="text-sm font-semibold text-[var(--color-text-primary)]">
-        {formatDollars(d.total)}
-      </p>
-      <p className="text-[11px] text-[var(--color-text-muted)]">
-        Contributed: {formatDollars(d.contributions)}
-      </p>
-      <p className="text-[11px] text-[var(--color-positive)]">
-        Growth: {formatDollars(d.growth)}
-      </p>
-    </div>
-  );
-}
+import { formatDollars } from "@/lib/chart-utils";
+import { CARD } from "@/lib/styles";
+import ContributionGrowthChart from "./ContributionGrowthChart";
 
 export default function DCACalculator() {
   const [monthly, setMonthly] = useState(500);
@@ -57,7 +16,6 @@ export default function DCACalculator() {
       const totalMonths = years * 12;
       const totalContributed = monthly * totalMonths;
 
-      // Build chart data points per year
       const points: {
         year: number;
         contributions: number;
@@ -90,7 +48,7 @@ export default function DCACalculator() {
     }, [monthly, years, returnRate]);
 
   return (
-    <div className="rounded-lg border border-[var(--color-border)] bg-white p-5 sm:p-6">
+    <div className={CARD}>
       <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-1">
         Dollar-Cost Averaging Calculator
       </h2>
@@ -163,77 +121,14 @@ export default function DCACalculator() {
         </div>
       </div>
 
-      {/* Outputs */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
-        <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-base)] p-4">
-          <p className="text-xs text-[var(--color-text-muted)] uppercase tracking-wider">
-            Total Contributed
-          </p>
-          <p className="text-lg font-semibold tabular-nums mt-1">
-            {formatDollars(totalContributed)}
-          </p>
-        </div>
-        <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-base)] p-4">
-          <p className="text-xs text-[var(--color-text-muted)] uppercase tracking-wider">
-            Est. Portfolio Value
-          </p>
-          <p className="text-lg font-semibold tabular-nums mt-1">
-            {formatDollars(portfolioValue)}
-          </p>
-        </div>
-        <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-base)] p-4">
-          <p className="text-xs text-[var(--color-text-muted)] uppercase tracking-wider">
-            Investment Growth
-          </p>
-          <p className="text-lg font-semibold tabular-nums mt-1 text-[var(--color-positive)]">
-            {formatDollars(investmentGrowth)}
-          </p>
-        </div>
-      </div>
-
-      {/* Chart */}
-      <div className="mb-6">
-        <ResponsiveContainer width="100%" height={300}>
-          <AreaChart data={chartData}>
-            <CartesianGrid
-              strokeDasharray="3 3"
-              stroke="var(--color-border)"
-              vertical={false}
-            />
-            <XAxis
-              dataKey="year"
-              tick={{ fontSize: 11, fill: "var(--color-text-muted)" }}
-              tickLine={false}
-              axisLine={false}
-              tickFormatter={(v: number) => (v === 0 ? "0" : `${v}`)}
-            />
-            <YAxis
-              tickFormatter={(v: number) => formatDollars(v)}
-              tick={{ fontSize: 11, fill: "var(--color-text-muted)" }}
-              tickLine={false}
-              axisLine={false}
-              width={70}
-            />
-            <Tooltip content={<CustomTooltip />} />
-            <Area
-              type="monotone"
-              dataKey="contributions"
-              stackId="1"
-              stroke="#d1d5db"
-              fill="#e5e7eb"
-              fillOpacity={1}
-            />
-            <Area
-              type="monotone"
-              dataKey="growth"
-              stackId="1"
-              stroke="var(--color-brand)"
-              fill="var(--color-brand)"
-              fillOpacity={0.25}
-            />
-          </AreaChart>
-        </ResponsiveContainer>
-      </div>
+      <ContributionGrowthChart
+        chartData={chartData}
+        stats={[
+          { label: "Total Contributed", value: totalContributed },
+          { label: "Est. Portfolio Value", value: portfolioValue },
+          { label: "Investment Growth", value: investmentGrowth, highlight: true },
+        ]}
+      />
 
       {/* Notes */}
       <div className="text-[11px] text-[var(--color-text-muted)] space-y-1.5 border-t border-[var(--color-border)] pt-4">
