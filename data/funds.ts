@@ -51,7 +51,7 @@ export const FUNDS: Record<string, FundData> = {
     description:
       "A single-ticket ETF providing 100% global equity exposure across Canada, US, international developed, and emerging markets.",
     whoThisSuits:
-      "Long-term investors who want maximum growth potential, can tolerate higher volatility, and have a time horizon of 10+ years.",
+      "The original all-in-one equity ETF, built by the company that invented index investing. Broadest diversification (13,700+ holdings), market-cap-weighted global allocation, and backed by Vanguard's investor-owned structure.",
     geographyAllocation: [
       { region: "United States", weight: 40, color: "#2563eb" },
       { region: "Canada", weight: 30, color: "#dc2626" },

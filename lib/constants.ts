@@ -69,6 +69,12 @@ export const LATEST_DISTRIBUTION = {
 
 export const LEARN_ARTICLES = [
   {
+    slug: "why-we-choose-veqt-over-xeqt",
+    title: "Why We Choose VEQT Over XEQT",
+    teaser: "VEQT and XEQT are close on paper. But the company behind VEQT, and how it's built, make the difference.",
+    editorial: true,
+  },
+  {
     slug: "what-is-veqt",
     title: "What Is VEQT? A Simple Explanation",
     teaser: "A beginner-friendly explanation of what VEQT is, how it works, and why Canadian investors love it.",
@@ -77,11 +83,6 @@ export const LEARN_ARTICLES = [
     slug: "veqt-vs-xeqt",
     title: "VEQT vs XEQT: What's the Difference?",
     teaser: "The most common VEQT question, answered. Two similar ETFs — here's what actually differs.",
-  },
-  {
-    slug: "veqt-in-tfsa-vs-rrsp-vs-non-registered",
-    title: "VEQT in a TFSA vs RRSP vs Non-Registered",
-    teaser: "Where should you hold VEQT? A plain-English breakdown of the tax implications for each account type.",
   },
 ];
 
