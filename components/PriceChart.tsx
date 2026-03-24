@@ -35,21 +35,19 @@ function formatDate(dateStr: string, period: ChartPeriod): string {
   });
 }
 
-interface TooltipPayloadItem {
-  value: number;
-}
-
-interface CustomTooltipProps {
+function CustomTooltip({
+  active,
+  payload,
+  label,
+}: {
   active?: boolean;
-  payload?: TooltipPayloadItem[];
+  payload?: { value: number }[];
   label?: string;
-}
-
-function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
+}) {
   if (!active || !payload?.length || !label) return null;
   const date = new Date(label + "T00:00:00");
   return (
-    <div className="rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 shadow-lg">
+    <div className="rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 shadow-md">
       <p className="text-[11px] text-[var(--color-text-muted)]">
         {date.toLocaleDateString("en-CA", {
           weekday: "short",
@@ -130,11 +128,7 @@ export default function PriceChart({
                   />
                 </linearGradient>
               </defs>
-              <CartesianGrid
-                strokeDasharray="3 3"
-                stroke="var(--color-border)"
-                vertical={false}
-              />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
               <XAxis
                 dataKey="date"
                 tickFormatter={(d) => formatDate(d, period)}

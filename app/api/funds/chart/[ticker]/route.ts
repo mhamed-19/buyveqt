@@ -19,6 +19,12 @@ function getStartDate(range: string): string {
       return `${now.getFullYear()}-01-01`;
     case "ALL":
       return "2012-01-01";
+    case "3Y":
+      now.setFullYear(now.getFullYear() - 3);
+      break;
+    case "5Y":
+      now.setFullYear(now.getFullYear() - 5);
+      break;
     case "1Y":
     default:
       now.setFullYear(now.getFullYear() - 1);
@@ -46,11 +52,11 @@ export async function GET(
   const range = searchParams.get("range") || "1Y";
 
   // Longer ranges get longer cache
-  const revalidateTime = ["6M", "1Y", "ALL"].includes(range) ? 86400 : 3600;
+  const revalidateTime = ["6M", "1Y", "3Y", "5Y", "ALL"].includes(range) ? 86400 : 3600;
 
   try {
-    const outputsize = range === "ALL" ? "full" : "compact";
-    const historyData = await getDailyHistory(symbol, outputsize);
+    const outputsize = ["ALL", "3Y", "5Y", "1Y"].includes(range) ? "full" : "compact";
+    const historyData = await getDailyHistory(symbol, outputsize as "compact" | "full");
 
     const cutoff = getStartDate(range);
     const data = historyData.data

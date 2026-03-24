@@ -98,5 +98,7 @@ export async function GET(request: Request) {
     data[result.ticker] = result;
   }
 
-  return NextResponse.json({ data, lastUpdated: new Date().toISOString() });
+  const response = { data, lastUpdated: new Date().toISOString() };
+
+  return NextResponse.json(response);
 }

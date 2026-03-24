@@ -51,7 +51,7 @@ export const FUNDS: Record<string, FundData> = {
     description:
       "A single-ticket ETF providing 100% global equity exposure across Canada, US, international developed, and emerging markets.",
     whoThisSuits:
-      "Long-term investors who want maximum growth potential, can tolerate higher volatility, and have a time horizon of 10+ years.",
+      "The original all-in-one equity ETF, built by the company that invented index investing. Broadest diversification (13,700+ holdings), market-cap-weighted global allocation, and backed by Vanguard's investor-owned structure.",
     geographyAllocation: [
       { region: "United States", weight: 40, color: "#2563eb" },
       { region: "Canada", weight: 30, color: "#dc2626" },
@@ -64,7 +64,7 @@ export const FUNDS: Record<string, FundData> = {
       { ticker: "VIU", name: "Vanguard FTSE Developed All Cap ex North America Index ETF", weight: 23, region: "International" },
       { ticker: "VEE", name: "Vanguard FTSE Emerging Markets All Cap Index ETF", weight: 7, region: "Emerging Markets" },
     ],
-    chartColor: "#2563eb",
+    chartColor: "#dc2626",
     merFootnote:
       "Vanguard reduced VEQT's management fee from 0.22% to 0.17% in November 2025. The official MER is still reported as 0.24% pending fiscal year-end recalculation. The effective MER is expected to be ~0.19%–0.20%.",
   },
@@ -98,7 +98,7 @@ export const FUNDS: Record<string, FundData> = {
       { ticker: "XEF", name: "iShares Core MSCI EAFE IMI Index ETF", weight: 22, region: "International" },
       { ticker: "IEMG", name: "iShares Core MSCI Emerging Markets ETF", weight: 8, region: "Emerging Markets" },
     ],
-    chartColor: "#dc2626",
+    chartColor: "#2563eb",
     merFootnote:
       "XEQT's management fee is 0.18%. The MER of 0.20% includes operating expenses.",
   },
@@ -194,6 +194,30 @@ export const FUNDS: Record<string, FundData> = {
     ],
     underlyingETFs: [],
     chartColor: "#f59e0b",
+  },
+  "VUN.TO": {
+    ticker: "VUN.TO",
+    name: "Vanguard U.S. Total Market Index ETF",
+    shortName: "VUN",
+    provider: "Vanguard",
+    mer: 0.16,
+    aum: "$8.5B",
+    inceptionDate: "2013-08-02",
+    numberOfHoldings: 3700,
+    distributionFrequency: "Annually",
+    currency: "CAD",
+    exchangeListed: "TSX",
+    equityAllocation: 100,
+    fixedIncomeAllocation: 0,
+    description:
+      "A pure US total market index fund tracking the CRSP US Total Market Index. One of VEQT's four underlying ETFs, providing broad exposure to US large-, mid-, and small-cap stocks.",
+    whoThisSuits:
+      "Investors who want dedicated US equity exposure in Canadian dollars. Lower fee but zero diversification outside the US market.",
+    geographyAllocation: [
+      { region: "United States", weight: 100, color: "#2563eb" },
+    ],
+    underlyingETFs: [],
+    chartColor: "#06b6d4",
   },
 };
 

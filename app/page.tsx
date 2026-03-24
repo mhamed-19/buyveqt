@@ -10,6 +10,7 @@ import SidebarCards from "@/components/SidebarCards";
 import InsideVeqtPreview from "@/components/InsideVeqtPreview";
 import ComparePreview from "@/components/ComparePreview";
 import LearnPreview from "@/components/LearnPreview";
+import CalculatorsPreview from "@/components/CalculatorsPreview";
 import CommunityStrip from "@/components/CommunityStrip";
 import TodaySnapshot from "@/components/TodaySnapshot";
 
@@ -98,6 +99,11 @@ export default function Home() {
         <InsideVeqtPreview />
         <ComparePreview />
         <LearnPreview />
+
+        {/* Section 6: Calculators Preview */}
+        <CalculatorsPreview />
+
+        {/* Section 7: Community */}
         <CommunityStrip />
       </main>
 

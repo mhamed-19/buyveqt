@@ -7,6 +7,22 @@ import { COMPARISON_PAGES, getComparison } from "@/data/comparisons";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { buildBreadcrumbSchema, canonicalUrl } from "@/lib/seo-config";
 
+function EditorialCallout() {
+  return (
+    <Link
+      href="/learn/why-we-choose-veqt-over-xeqt"
+      className="block rounded-lg border border-[var(--color-brand)]/30 bg-[var(--color-brand)]/[0.04] p-4 hover:border-[var(--color-brand)]/60 transition-colors"
+    >
+      <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-brand)] mb-1">
+        Our Take
+      </p>
+      <p className="text-sm font-medium text-[var(--color-text-primary)]">
+        Read our editorial: Why We Choose VEQT Over XEQT &rarr;
+      </p>
+    </Link>
+  );
+}
+
 interface PageProps {
   params: Promise<{ slug: string }>;
 }
@@ -61,6 +77,12 @@ export default async function CompareSlugPage({ params }: PageProps) {
         </div>
 
         <CompareContent initialFunds={[...page.funds]} />
+
+        {slug === "veqt-vs-xeqt" && (
+          <div className="mt-6">
+            <EditorialCallout />
+          </div>
+        )}
 
         <div className="mt-8 pt-6 border-t border-[var(--color-border)]">
           <Link

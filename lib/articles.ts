@@ -26,6 +26,7 @@ const CONTENT_DIR = path.join(process.cwd(), "content", "learn");
 
 /** Display order for the learn hub */
 const ARTICLE_ORDER = [
+  "why-we-choose-veqt-over-xeqt",
   "what-is-veqt",
   "what-you-actually-own",
   "veqt-vs-xeqt",

@@ -50,7 +50,7 @@ function useCountUp(target: number, duration = 1200, decimals = 0) {
   return { value, ref };
 }
 
-const ROTATING_WORDS = ["understood", "compared", "demystified"];
+const ROTATING_WORDS = ["understood", "compared", "chosen"];
 
 function RotatingWord() {
   const [index, setIndex] = useState(0);

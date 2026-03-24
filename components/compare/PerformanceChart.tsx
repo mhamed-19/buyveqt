@@ -17,6 +17,7 @@ import { CHART_PERIODS } from "@/lib/constants";
 import DataFreshness from "@/components/ui/DataFreshness";
 import StaleBanner from "@/components/ui/StaleBanner";
 import DataUnavailable from "@/components/ui/DataUnavailable";
+import { getCached, setCache } from "@/lib/cache";
 
 interface PerformanceChartProps {
   selectedFunds: string[];
@@ -49,23 +50,20 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
   if (!active || !payload?.length || !label) return null;
   const date = new Date(label + "T00:00:00");
   return (
-    <div className="rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 shadow-lg text-sm">
+    <div className="rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 shadow-md">
       <p className="text-[11px] text-[var(--color-text-muted)] mb-1">
         {date.toLocaleDateString("en-CA", { year: "numeric", month: "short", day: "numeric" })}
       </p>
-      {payload.map((p) => {
-        const shortName = p.dataKey.replace(".TO", "");
-        return (
-          <p key={p.dataKey} className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: p.color }} />
-            <span className="font-medium">{shortName}</span>
-            <span className="ml-auto tabular-nums">
-              {p.value >= 0 ? "+" : ""}
-              {p.value.toFixed(2)}%
-            </span>
-          </p>
-        );
-      })}
+      {payload.map((p) => (
+        <p key={p.dataKey} className="flex items-center gap-2 text-sm">
+          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: p.color }} />
+          <span className="font-medium">{p.dataKey.replace(".TO", "")}</span>
+          <span className="ml-auto tabular-nums">
+            {p.value >= 0 ? "+" : ""}
+            {p.value.toFixed(2)}%
+          </span>
+        </p>
+      ))}
     </div>
   );
 }
@@ -83,14 +81,22 @@ export default function PerformanceChart({ selectedFunds }: PerformanceChartProp
     try {
       const responses: ChartResponse[] = await Promise.all(
         selectedFunds.map(async (ticker) => {
-          const res = await fetch(`/api/funds/chart/${ticker}?range=${period}`);
-          if (!res.ok) return { ticker, data: [], source: undefined };
-          const json = await res.json();
-          return {
-            ticker,
-            data: json.data as { date: string; close: number }[],
-            source: json.source as DataSourceType | undefined,
-          };
+          const cacheKey = `chart:${ticker}:${period}`;
+          try {
+            const res = await fetch(`/api/funds/chart/${ticker}?range=${period}`);
+            if (!res.ok) throw new Error("API error");
+            const json = await res.json();
+            const chartDataArr = json.data as { date: string; close: number }[];
+            setCache(cacheKey, chartDataArr);
+            return {
+              ticker,
+              data: chartDataArr,
+              source: json.source as DataSourceType | undefined,
+            };
+          } catch {
+            const cached = getCached<{ date: string; close: number }[]>(cacheKey);
+            return { ticker, data: cached || [], source: "cache" as DataSourceType };
+          }
         })
       );
 

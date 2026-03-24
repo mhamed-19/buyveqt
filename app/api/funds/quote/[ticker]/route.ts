@@ -55,7 +55,7 @@ export async function GET(
       // non-critical
     }
 
-    return NextResponse.json({
+    const response = {
       ticker: displayTicker,
       price: quoteData.price,
       change: quoteData.change,
@@ -68,7 +68,9 @@ export async function GET(
       lastUpdated: quoteData.fetchedAt,
       source: quoteData.source,
       error: false,
-    });
+    };
+
+    return NextResponse.json(response);
   } catch (error) {
     console.error(`Failed to fetch quote for ${displayTicker}:`, error);
     return NextResponse.json({

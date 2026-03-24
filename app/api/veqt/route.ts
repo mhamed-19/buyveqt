@@ -15,7 +15,9 @@ function getHistoryDays(period: string): number {
       const jan1 = new Date(now.getFullYear(), 0, 1);
       return Math.ceil((now.getTime() - jan1.getTime()) / (1000 * 60 * 60 * 24));
     }
-    case "1Y":
+    case "1Y": return 365;
+    case "3Y": return 365 * 3;
+    case "5Y": return 365 * 5;
     default: return 365;
   }
 }
@@ -27,7 +29,7 @@ export async function GET(request: Request) {
   try {
     const [quoteData, historyData] = await Promise.all([
       getQuote("VEQT"),
-      getDailyHistory("VEQT", period === "1Y" || period === "YTD" ? "full" : "compact"),
+      getDailyHistory("VEQT", ["3Y", "5Y", "1Y"].includes(period) ? "full" : "compact"),
     ]);
 
     // Filter history to match requested period
@@ -89,6 +91,7 @@ export async function GET(request: Request) {
   } catch (error) {
     console.error("Failed to fetch VEQT data:", error);
 
+    // Last resort: hardcoded fallback
     const response: VeqtApiResponse = {
       quote: { ...FALLBACK_QUOTE, lastUpdated: new Date().toISOString() },
       historical: [],
@@ -96,7 +99,6 @@ export async function GET(request: Request) {
       quoteSource: "cache",
       quoteFetchedAt: new Date().toISOString(),
     };
-
     return NextResponse.json(response, { status: 200 });
   }
 }

@@ -62,12 +62,18 @@ export const COMPARISON_DATA = {
 };
 
 export const LATEST_DISTRIBUTION = {
-  amount: "$1.5206",
-  exDivDate: "Dec 27, 2024",
-  payableDate: "Jan 6, 2025",
+  amount: "$0.76018",
+  exDivDate: "Dec 30, 2025",
+  payableDate: "Jan 7, 2026",
 };
 
 export const LEARN_ARTICLES = [
+  {
+    slug: "why-we-choose-veqt-over-xeqt",
+    title: "Why We Choose VEQT Over XEQT",
+    teaser: "VEQT and XEQT are close on paper. But the company behind VEQT, and how it's built, make the difference.",
+    editorial: true,
+  },
   {
     slug: "what-is-veqt",
     title: "What Is VEQT? A Simple Explanation",
@@ -77,11 +83,6 @@ export const LEARN_ARTICLES = [
     slug: "veqt-vs-xeqt",
     title: "VEQT vs XEQT: What's the Difference?",
     teaser: "The most common VEQT question, answered. Two similar ETFs — here's what actually differs.",
-  },
-  {
-    slug: "veqt-in-tfsa-vs-rrsp-vs-non-registered",
-    title: "VEQT in a TFSA vs RRSP vs Non-Registered",
-    teaser: "Where should you hold VEQT? A plain-English breakdown of the tax implications for each account type.",
   },
 ];
 
@@ -110,6 +111,8 @@ export const CHART_PERIODS = [
   { key: "6M", label: "6M", months: 6 },
   { key: "YTD", label: "YTD", months: 0 },
   { key: "1Y", label: "1Y", months: 12 },
+  { key: "3Y", label: "3Y", months: 36 },
+  { key: "5Y", label: "5Y", months: 60 },
 ] as const;
 
 export const DISCLAIMER =
@@ -120,4 +123,5 @@ export const NAV_LINKS = [
   { href: "/compare", label: "Compare" },
   { href: "/invest", label: "Calculator" },
   { href: "/learn", label: "Learn" },
+  { href: "/calculators", label: "Calculators" },
 ];
