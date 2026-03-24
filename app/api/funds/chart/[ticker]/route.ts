@@ -1,33 +1,36 @@
 import { NextResponse } from "next/server";
-import YahooFinance from "yahoo-finance2";
-import { readCache, writeCache } from "@/lib/file-cache";
+import { getDailyHistory } from "@/lib/data";
 
-const yf = new YahooFinance({ suppressNotices: ["ripHistorical", "yahooSurvey"] });
+const ALLOWED_TICKERS = ["VEQT", "XEQT", "ZEQT", "VGRO", "VFV", "VUN"];
 
-const ALLOWED_TICKERS = ["VEQT.TO", "XEQT.TO", "ZEQT.TO", "VGRO.TO", "VFV.TO", "VUN.TO"];
-
-function getStartDate(range: string): Date {
+function getStartDate(range: string): string {
   const now = new Date();
   switch (range) {
     case "1M":
-      return new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+      now.setMonth(now.getMonth() - 1);
+      break;
     case "3M":
-      return new Date(now.getFullYear(), now.getMonth() - 3, now.getDate());
+      now.setMonth(now.getMonth() - 3);
+      break;
     case "6M":
-      return new Date(now.getFullYear(), now.getMonth() - 6, now.getDate());
+      now.setMonth(now.getMonth() - 6);
+      break;
     case "YTD":
-      return new Date(now.getFullYear(), 0, 1);
+      return `${now.getFullYear()}-01-01`;
     case "ALL":
-      return new Date(2012, 0, 1);
-    case "1Y":
-      return new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+      return "2012-01-01";
     case "3Y":
-      return new Date(now.getFullYear() - 3, now.getMonth(), now.getDate());
+      now.setFullYear(now.getFullYear() - 3);
+      break;
     case "5Y":
-      return new Date(now.getFullYear() - 5, now.getMonth(), now.getDate());
+      now.setFullYear(now.getFullYear() - 5);
+      break;
+    case "1Y":
     default:
-      return new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+      now.setFullYear(now.getFullYear() - 1);
+      break;
   }
+  return now.toISOString().split("T")[0];
 }
 
 export async function GET(
@@ -35,11 +38,10 @@ export async function GET(
   { params }: { params: Promise<{ ticker: string }> }
 ) {
   const { ticker } = await params;
-  const normalizedTicker = ticker.toUpperCase().endsWith(".TO")
-    ? ticker.toUpperCase()
-    : `${ticker.toUpperCase()}.TO`;
+  const symbol = ticker.toUpperCase().replace(/\.TO$/, "");
+  const displayTicker = `${symbol}.TO`;
 
-  if (!ALLOWED_TICKERS.includes(normalizedTicker)) {
+  if (!ALLOWED_TICKERS.includes(symbol)) {
     return NextResponse.json(
       { error: true, message: "Unsupported ticker" },
       { status: 400 }
@@ -48,51 +50,40 @@ export async function GET(
 
   const { searchParams } = new URL(request.url);
   const range = searchParams.get("range") || "1Y";
-  const cacheKey = `chart_${normalizedTicker}_${range}`;
 
-  const revalidateTime = ["6M", "1Y", "3Y", "5Y", "ALL"].includes(range) ? 3600 : 1800;
+  // Longer ranges get longer cache
+  const revalidateTime = ["6M", "1Y", "3Y", "5Y", "ALL"].includes(range) ? 86400 : 3600;
 
   try {
-    const interval = ["ALL", "3Y", "5Y"].includes(range) ? ("1wk" as const) : ("1d" as const);
+    const outputsize = ["ALL", "3Y", "5Y", "1Y"].includes(range) ? "full" : "compact";
+    const historyData = await getDailyHistory(symbol, outputsize as "compact" | "full");
 
-    const historicalResult = await yf.historical(normalizedTicker, {
-      period1: getStartDate(range),
-      period2: new Date(),
-      interval,
-    });
+    const cutoff = getStartDate(range);
+    const data = historyData.data
+      .filter((d) => d.date >= cutoff)
+      .map((d) => ({
+        date: d.date,
+        close: d.adjustedClose || d.close,
+      }));
 
-    const data = (Array.isArray(historicalResult) ? historicalResult : []).map(
-      (d: { date: Date; close?: number | null }) => ({
-        date: d.date.toISOString().split("T")[0],
-        close: d.close ?? 0,
-      })
-    );
-
-    const response = { ticker: normalizedTicker, range, data, error: false };
-
-    // Cache successful response
-    writeCache(cacheKey, response);
-
-    return NextResponse.json(response, {
-      headers: {
-        "Cache-Control": `s-maxage=${revalidateTime}, stale-while-revalidate`,
+    return NextResponse.json(
+      {
+        ticker: displayTicker,
+        range,
+        data,
+        source: historyData.source,
+        error: false,
       },
-    });
-  } catch (error) {
-    console.error(`Failed to fetch chart for ${normalizedTicker}:`, error);
-
-    // Try file cache
-    const cached = readCache<{ ticker: string; range: string; data: unknown[]; error: boolean }>(cacheKey);
-    if (cached) {
-      return NextResponse.json({ ...cached.data, error: false }, {
+      {
         headers: {
           "Cache-Control": `s-maxage=${revalidateTime}, stale-while-revalidate`,
         },
-      });
-    }
-
+      }
+    );
+  } catch (error) {
+    console.error(`Failed to fetch chart for ${displayTicker}:`, error);
     return NextResponse.json({
-      ticker: normalizedTicker,
+      ticker: displayTicker,
       range,
       data: [],
       error: true,

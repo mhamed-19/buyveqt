@@ -12,9 +12,11 @@ import {
   Legend,
 } from "recharts";
 import { FUNDS } from "@/data/funds";
-import type { ChartPeriod } from "@/lib/types";
+import type { ChartPeriod, DataSourceType } from "@/lib/types";
 import { CHART_PERIODS } from "@/lib/constants";
-import { ChartTooltipWrapper, GRID_PROPS, AXIS_PROPS } from "@/lib/chart-utils";
+import DataFreshness from "@/components/ui/DataFreshness";
+import StaleBanner from "@/components/ui/StaleBanner";
+import DataUnavailable from "@/components/ui/DataUnavailable";
 import { getCached, setCache } from "@/lib/cache";
 
 interface PerformanceChartProps {
@@ -26,19 +28,29 @@ interface ChartDataPoint {
   [ticker: string]: number | string;
 }
 
-function CustomTooltip({
-  active,
-  payload,
-  label,
-}: {
+interface ChartResponse {
+  ticker: string;
+  data: { date: string; close: number }[];
+  source?: DataSourceType;
+}
+
+interface TooltipPayloadItem {
+  dataKey: string;
+  value: number;
+  color: string;
+}
+
+interface CustomTooltipProps {
   active?: boolean;
-  payload?: { dataKey: string; value: number; color: string }[];
+  payload?: TooltipPayloadItem[];
   label?: string;
-}) {
+}
+
+function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
   if (!active || !payload?.length || !label) return null;
   const date = new Date(label + "T00:00:00");
   return (
-    <ChartTooltipWrapper>
+    <div className="rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 shadow-md">
       <p className="text-[11px] text-[var(--color-text-muted)] mb-1">
         {date.toLocaleDateString("en-CA", { year: "numeric", month: "short", day: "numeric" })}
       </p>
@@ -52,7 +64,7 @@ function CustomTooltip({
           </span>
         </p>
       ))}
-    </ChartTooltipWrapper>
+    </div>
   );
 }
 
@@ -60,27 +72,45 @@ export default function PerformanceChart({ selectedFunds }: PerformanceChartProp
   const [period, setPeriod] = useState<ChartPeriod>("1Y");
   const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sources, setSources] = useState<DataSourceType[]>([]);
+  const [fetchedAt, setFetchedAt] = useState<string | null>(null);
+  const [missingFunds, setMissingFunds] = useState<string[]>([]);
 
   const fetchChartData = useCallback(async () => {
     setLoading(true);
     try {
-      const responses = await Promise.all(
+      const responses: ChartResponse[] = await Promise.all(
         selectedFunds.map(async (ticker) => {
           const cacheKey = `chart:${ticker}:${period}`;
           try {
             const res = await fetch(`/api/funds/chart/${ticker}?range=${period}`);
             if (!res.ok) throw new Error("API error");
             const json = await res.json();
-            const chartData = json.data as { date: string; close: number }[];
-            setCache(cacheKey, chartData);
-            return { ticker, data: chartData };
+            const chartDataArr = json.data as { date: string; close: number }[];
+            setCache(cacheKey, chartDataArr);
+            return {
+              ticker,
+              data: chartDataArr,
+              source: json.source as DataSourceType | undefined,
+            };
           } catch {
             const cached = getCached<{ date: string; close: number }[]>(cacheKey);
-            return { ticker, data: cached || [] };
+            return { ticker, data: cached || [], source: "cache" as DataSourceType };
           }
         })
       );
 
+      // Track sources and missing funds
+      const allSources = responses
+        .map((r) => r.source)
+        .filter((s): s is DataSourceType => !!s);
+      setSources([...new Set(allSources)]);
+      setFetchedAt(new Date().toISOString());
+      setMissingFunds(
+        responses.filter((r) => r.data.length === 0).map((r) => r.ticker.replace(".TO", ""))
+      );
+
+      // Normalize to % change from first available data point per fund
       const normalized: Record<string, Record<string, number>> = {};
       const allDates = new Set<string>();
 
@@ -113,9 +143,15 @@ export default function PerformanceChart({ selectedFunds }: PerformanceChartProp
     fetchChartData();
   }, [fetchChartData]);
 
+  const hasCached = sources.includes("cache");
+  const displaySource: DataSourceType = hasCached
+    ? "cache"
+    : sources[0] ?? "yahoo-finance";
+  const allUnavailable = !loading && chartData.length === 0;
+
   return (
     <div className="rounded-lg border border-[var(--color-border)] bg-white p-4 sm:p-5">
-      <div className="flex items-center justify-between gap-3 mb-4">
+      <div className="flex items-center justify-between gap-3 mb-2">
         <h2 className="text-sm font-semibold text-[var(--color-text-secondary)]">
           Normalized Performance (% change)
         </h2>
@@ -136,57 +172,80 @@ export default function PerformanceChart({ selectedFunds }: PerformanceChartProp
         </div>
       </div>
 
+      {/* Stale banner above chart */}
+      {hasCached && fetchedAt && (
+        <StaleBanner fetchedAt={fetchedAt} className="mb-3" />
+      )}
+
       <div>
         {loading ? (
           <div className="skeleton h-[320px] w-full rounded-lg" />
-        ) : chartData.length === 0 ? (
-          <div className="h-[320px] flex items-center justify-center text-sm text-[var(--color-text-muted)]">
-            Chart data unavailable
-          </div>
+        ) : allUnavailable ? (
+          <DataUnavailable type="chart" className="min-h-[320px]" />
         ) : (
-          <ResponsiveContainer width="100%" height={320}>
-            <LineChart data={chartData}>
-              <CartesianGrid {...GRID_PROPS} />
-              <XAxis
-                dataKey="date"
-                tickFormatter={(d) => {
-                  const date = new Date(d + "T00:00:00");
-                  return date.toLocaleDateString("en-CA", { month: "short", year: "2-digit" });
-                }}
-                {...AXIS_PROPS}
-                interval="preserveStartEnd"
-                minTickGap={50}
-              />
-              <YAxis
-                tickFormatter={(v: number) => `${v >= 0 ? "+" : ""}${v.toFixed(0)}%`}
-                {...AXIS_PROPS}
-                width={50}
-              />
-              <Tooltip content={<CustomTooltip />} />
-              <Legend
-                formatter={(value: string) => (
-                  <span className="text-xs font-medium">{value.replace(".TO", "")}</span>
-                )}
-              />
-              {selectedFunds.map((ticker) => (
-                <Line
-                  key={ticker}
-                  type="monotone"
-                  dataKey={ticker}
-                  stroke={FUNDS[ticker]?.chartColor || "#6b7280"}
-                  strokeWidth={2}
-                  dot={false}
-                  connectNulls
+          <>
+            <ResponsiveContainer width="100%" height={320}>
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
+                <XAxis
+                  dataKey="date"
+                  tickFormatter={(d) => {
+                    const date = new Date(d + "T00:00:00");
+                    return date.toLocaleDateString("en-CA", { month: "short", year: "2-digit" });
+                  }}
+                  tick={{ fontSize: 11, fill: "var(--color-text-muted)" }}
+                  tickLine={false}
+                  axisLine={false}
+                  interval="preserveStartEnd"
+                  minTickGap={50}
                 />
-              ))}
-            </LineChart>
-          </ResponsiveContainer>
+                <YAxis
+                  tickFormatter={(v: number) => `${v >= 0 ? "+" : ""}${v.toFixed(0)}%`}
+                  tick={{ fontSize: 11, fill: "var(--color-text-muted)" }}
+                  tickLine={false}
+                  axisLine={false}
+                  width={50}
+                />
+                <Tooltip content={<CustomTooltip />} />
+                <Legend
+                  formatter={(value: string) => (
+                    <span className="text-xs font-medium">{value.replace(".TO", "")}</span>
+                  )}
+                />
+                {selectedFunds.map((ticker) => (
+                  <Line
+                    key={ticker}
+                    type="monotone"
+                    dataKey={ticker}
+                    stroke={FUNDS[ticker]?.chartColor || "#6b7280"}
+                    strokeWidth={2}
+                    dot={false}
+                    connectNulls
+                  />
+                ))}
+              </LineChart>
+            </ResponsiveContainer>
+
+            {/* Note about missing fund data */}
+            {missingFunds.length > 0 && (
+              <p className="text-xs text-[var(--color-text-muted)] mt-1">
+                {missingFunds.join(", ")} data temporarily unavailable
+              </p>
+            )}
+          </>
         )}
       </div>
 
-      <p className="text-[11px] text-[var(--color-text-muted)] mt-2">
-        Source: Yahoo Finance &middot; Normalized to % change from start of period
-      </p>
+      {/* Data freshness footer */}
+      <div className="mt-2">
+        {!loading && fetchedAt ? (
+          <DataFreshness source={displaySource} fetchedAt={fetchedAt} />
+        ) : (
+          <p className="text-[11px] text-[var(--color-text-muted)]">
+            Source: Alpha Vantage / Yahoo Finance
+          </p>
+        )}
+      </div>
     </div>
   );
 }
