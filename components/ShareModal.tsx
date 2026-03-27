@@ -268,7 +268,7 @@ export default function ShareModal({ tab, params, isOpen, onClose }: ShareModalP
           </p>
           <div className="flex justify-end mt-2 relative">
             <span className="text-sm font-bold text-white">
-              Buy<span className="text-[#16a34a]">VEQT</span>
+              BuyVEQT
             </span>
           </div>
         </div>
