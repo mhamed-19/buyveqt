@@ -2,6 +2,10 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://buyveqt.com"),
+  alternates: {
+    canonical: "./",
+  },
   title: "BuyVEQT — The VEQT Investor Community Hub",
   description:
     "BuyVEQT — The clearest unofficial resource for understanding VEQT. Compare all-in-one Canadian ETFs, explore holdings, and learn what you actually own.",
