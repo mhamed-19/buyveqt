@@ -239,7 +239,7 @@ function ChartTooltip({
   if (!active || !payload?.length || !label) return null;
   const date = new Date(label + "T00:00:00");
   return (
-    <div className="rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 shadow-lg text-sm">
+    <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] px-3 py-2 shadow-lg text-sm">
       <p className="text-[11px] text-[var(--color-text-muted)] mb-1">
         {date.toLocaleDateString("en-CA", {
           year: "numeric",
@@ -396,7 +396,7 @@ export default function InvestCalculator({ history }: InvestCalculatorProps) {
           }}
           className={`flex-1 rounded-md px-4 py-2.5 text-sm font-semibold transition-all ${
             mode === "lump"
-              ? "bg-white text-[var(--color-text-primary)] shadow-sm"
+              ? "bg-[var(--color-card)] text-[var(--color-text-primary)] shadow-sm"
               : "text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
           }`}
         >
@@ -410,7 +410,7 @@ export default function InvestCalculator({ history }: InvestCalculatorProps) {
           }}
           className={`flex-1 rounded-md px-4 py-2.5 text-sm font-semibold transition-all ${
             mode === "dca"
-              ? "bg-white text-[var(--color-text-primary)] shadow-sm"
+              ? "bg-[var(--color-card)] text-[var(--color-text-primary)] shadow-sm"
               : "text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
           }`}
         >
@@ -433,7 +433,7 @@ export default function InvestCalculator({ history }: InvestCalculatorProps) {
               inputMode="decimal"
               value={amountInput}
               onChange={(e) => handleAmountChange(e.target.value)}
-              className="w-full rounded-lg border border-[var(--color-border)] bg-white pl-7 pr-3 py-2.5 text-sm font-medium tabular-nums focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]/30 focus:border-[var(--color-brand)]"
+              className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] pl-7 pr-3 py-2.5 text-sm font-medium tabular-nums focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]/30 focus:border-[var(--color-brand)]"
             />
           </div>
         </div>
@@ -447,7 +447,7 @@ export default function InvestCalculator({ history }: InvestCalculatorProps) {
             min={earliestDate}
             max={maxStartDate}
             onChange={(e) => setStartDate(e.target.value)}
-            className="w-full rounded-lg border border-[var(--color-border)] bg-white px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]/30 focus:border-[var(--color-brand)]"
+            className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]/30 focus:border-[var(--color-brand)]"
           />
         </div>
       </div>
@@ -463,15 +463,15 @@ export default function InvestCalculator({ history }: InvestCalculatorProps) {
       {result && !validationMsg && (
         <>
           {/* Hero Result */}
-          <div className="rounded-xl border border-[var(--color-border)] bg-white p-5 sm:p-6">
+          <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-5 sm:p-6">
             <p className="text-xs text-[var(--color-text-muted)] uppercase tracking-wider mb-1">
               {isDCA ? "Your portfolio would be worth" : "Your investment would be worth"}
             </p>
             <p
               className={`text-3xl sm:text-4xl font-extrabold tabular-nums ${
                 isPositive
-                  ? "text-[#15803d]"
-                  : "text-[#b91c1c]"
+                  ? "text-[var(--color-positive)]"
+                  : "text-[var(--color-negative)]"
               }`}
             >
               {formatDollars(result.currentValue)}
@@ -484,7 +484,7 @@ export default function InvestCalculator({ history }: InvestCalculatorProps) {
                 </p>
                 <p
                   className={`text-sm font-bold tabular-nums ${
-                    isPositive ? "text-[#15803d]" : "text-[#b91c1c]"
+                    isPositive ? "text-[var(--color-positive)]" : "text-[var(--color-negative)]"
                   }`}
                 >
                   {isPositive ? "+" : "\u2212"}
@@ -497,7 +497,7 @@ export default function InvestCalculator({ history }: InvestCalculatorProps) {
                 </p>
                 <p
                   className={`text-sm font-bold tabular-nums ${
-                    isPositive ? "text-[#15803d]" : "text-[#b91c1c]"
+                    isPositive ? "text-[var(--color-positive)]" : "text-[var(--color-negative)]"
                   }`}
                 >
                   {isPositive ? "+" : "\u2212"}
@@ -530,7 +530,7 @@ export default function InvestCalculator({ history }: InvestCalculatorProps) {
           </div>
 
           {/* Chart */}
-          <div className="rounded-lg border border-[var(--color-border)] bg-white p-4 sm:p-5">
+          <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] p-4 sm:p-5">
             <h3 className="text-sm font-semibold text-[var(--color-text-secondary)] mb-3">
               {isDCA
                 ? "Portfolio Value vs. Contributions"
@@ -585,7 +585,7 @@ export default function InvestCalculator({ history }: InvestCalculatorProps) {
                   <Line
                     type="stepAfter"
                     dataKey="contributed"
-                    stroke="#9ca3af"
+                    stroke="var(--color-text-muted)"
                     strokeWidth={1.5}
                     strokeDasharray="6 3"
                     dot={false}
@@ -658,13 +658,13 @@ export default function InvestCalculator({ history }: InvestCalculatorProps) {
                   <Tooltip content={<ChartTooltip />} />
                   <ReferenceLine
                     y={amount}
-                    stroke="#9ca3af"
+                    stroke="var(--color-text-muted)"
                     strokeDasharray="6 3"
                     strokeWidth={1}
                     label={{
                       value: "Invested",
                       position: "right",
-                      fill: "#9ca3af",
+                      fill: "var(--color-text-muted)",
                       fontSize: 11,
                     }}
                   />
