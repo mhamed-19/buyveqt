@@ -45,23 +45,40 @@ export default function ChartSidebar({
   quoteFetchedAt,
 }: ChartSidebarProps) {
   const [calcInput, setCalcInput] = useState(10000);
-  const [allHistory, setAllHistory] = useState<HistoricalDataPoint[]>([]);
+  /* Compact daily data for accurate returns (same source as /today page) */
+  const [dailyData, setDailyData] = useState<HistoricalDataPoint[]>([]);
+  /* Full history for inception price (calculator) */
+  const [inceptionPrice, setInceptionPrice] = useState<number | null>(null);
   const [historyLoading, setHistoryLoading] = useState(true);
 
-  /* Fetch ALL-period data once for accurate returns + inception calculator */
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/veqt?period=ALL")
-      .then((res) => (res.ok ? res.json() : Promise.reject()))
-      .then((json) => {
-        if (!cancelled) {
-          setAllHistory(json.historical ?? []);
-          setHistoryLoading(false);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) setHistoryLoading(false);
-      });
+
+    Promise.allSettled([
+      fetch("/api/history?symbol=VEQT&outputsize=compact").then((r) =>
+        r.ok ? r.json() : Promise.reject()
+      ),
+      fetch("/api/veqt?period=ALL").then((r) =>
+        r.ok ? r.json() : Promise.reject()
+      ),
+    ]).then(([compactResult, allResult]) => {
+      if (cancelled) return;
+      if (compactResult.status === "fulfilled") {
+        const points = (compactResult.value.data ?? []).map(
+          (d: { date: string; adjustedClose?: number; close: number }) => ({
+            date: d.date,
+            close: d.adjustedClose ?? d.close,
+          })
+        );
+        setDailyData(points);
+      }
+      if (allResult.status === "fulfilled") {
+        const hist = allResult.value.historical ?? [];
+        if (hist.length > 0) setInceptionPrice(hist[0].close);
+      }
+      setHistoryLoading(false);
+    });
+
     return () => { cancelled = true; };
   }, []);
 
@@ -72,15 +89,12 @@ export default function ChartSidebar({
 
   const perfMetrics = [
     { label: "1D", value: dayChange },
-    { label: "1W", value: calcReturn(allHistory, 5) },
-    { label: "1M", value: calcReturn(allHistory, 22) },
-    { label: "3M", value: calcReturn(allHistory, 66) },
-    { label: "YTD", value: calcYTD(allHistory) },
-    { label: "1Y", value: allHistory.length >= 252 ? calcReturn(allHistory, 252) : null },
+    { label: "1W", value: calcReturn(dailyData, 5) },
+    { label: "1M", value: calcReturn(dailyData, 22) },
+    { label: "3M", value: calcReturn(dailyData, 66) },
+    { label: "YTD", value: calcYTD(dailyData) },
+    { label: "1Y", value: dailyData.length >= 252 ? calcReturn(dailyData, 252) : null },
   ];
-
-  /* Calculator always uses inception price from full history */
-  const inceptionPrice = allHistory.length > 0 ? allHistory[0].close : null;
   const currentPrice = quote?.price ?? 0;
   const calcResult =
     currentPrice > 0 && inceptionPrice !== null && inceptionPrice > 0
@@ -113,7 +127,7 @@ export default function ChartSidebar({
               <div key={i} className="skeleton h-12 rounded-lg" />
             ))}
           </div>
-        ) : allHistory.length >= 2 ? (
+        ) : dailyData.length >= 2 ? (
           <div className="grid grid-cols-3 gap-2">
             {perfMetrics.map((m) => {
               const pos = m.value !== null && m.value >= 0;
