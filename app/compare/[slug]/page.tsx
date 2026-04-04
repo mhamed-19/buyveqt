@@ -10,17 +10,25 @@ import { buildBreadcrumbSchema, canonicalUrl } from "@/lib/seo-config";
 
 function EditorialCallout() {
   return (
-    <Link
-      href="/learn/why-we-choose-veqt-over-xeqt"
-      className="block rounded-lg border border-[var(--color-brand)]/30 bg-[var(--color-brand)]/[0.04] p-4 hover:border-[var(--color-brand)]/60 transition-colors"
-    >
-      <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-brand)] mb-1">
-        Our Take
+    <div className="rounded-lg border border-[var(--color-brand)]/30 bg-[var(--color-brand)]/[0.04] p-5 sm:p-6">
+      <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-brand)] mb-2">
+        Beyond the Numbers
       </p>
-      <p className="text-sm font-medium text-[var(--color-text-primary)]">
-        Read our editorial: Why We Choose VEQT Over XEQT &rarr;
+      <p className="text-base sm:text-lg font-bold text-[var(--color-text-primary)] mb-2">
+        The spreadsheet says they&apos;re the same. The ownership structure says otherwise.
       </p>
-    </Link>
+      <p className="text-sm text-[var(--color-text-muted)] leading-relaxed mb-4 max-w-prose">
+        Vanguard is owned by its investors. BlackRock is owned by Wall Street.
+        When two funds perform identically, the tiebreaker is trust &mdash; and
+        trust favours the company that was built to serve you.
+      </p>
+      <Link
+        href="/learn/why-we-choose-veqt-over-xeqt"
+        className="inline-flex items-center px-5 py-2.5 rounded-lg bg-[var(--color-brand)] text-white text-sm font-semibold hover:bg-[var(--color-brand-dark)] transition-colors"
+      >
+        Read: Why We Choose VEQT Over XEQT &rarr;
+      </Link>
+    </div>
   );
 }
 
