@@ -45,7 +45,7 @@ export default function ComparePage() {
       />
       <main className="flex-1 mx-auto w-full max-w-6xl px-4 py-8">
         <div className="mb-6">
-          <h1 className="text-2xl sm:text-3xl font-bold text-[var(--color-text-primary)]">
+          <h1 className="text-2xl sm:text-3xl font-serif font-normal text-[var(--color-text-primary)]">
             Compare VEQT to Other All-in-One ETFs
           </h1>
           <p className="mt-2 text-[var(--color-text-muted)] max-w-prose">

@@ -15,7 +15,7 @@ export default function AnimateIn({
   delay = 0,
   as: Tag = "div",
 }: AnimateInProps) {
-  const ref = useRef<HTMLDivElement>(null);
+  const ref = useRef<HTMLDivElement | HTMLElement>(null);
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -36,7 +36,7 @@ export default function AnimateIn({
 
   return (
     <Tag
-      ref={ref as React.Ref<HTMLDivElement>}
+      ref={ref as React.RefObject<HTMLDivElement>}
       className={`transition-all duration-700 ease-out ${
         visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-5"
       } ${className}`}

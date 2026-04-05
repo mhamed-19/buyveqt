@@ -76,7 +76,7 @@ export default function ArticleLayout({ frontmatter, content }: ArticleLayoutPro
 
       {/* Header */}
       <header className="mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold text-[var(--color-text-primary)] leading-tight">
+        <h1 className="text-2xl sm:text-3xl font-serif font-normal text-[var(--color-text-primary)] leading-tight">
           {frontmatter.title}
         </h1>
         <p className="mt-2 text-sm text-[var(--color-text-muted)]">
