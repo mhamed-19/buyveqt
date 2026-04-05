@@ -18,44 +18,7 @@ export interface SubredditStats {
 
 const SUBREDDIT = 'JustBuyVEQT';
 const REDDIT_FETCH_TIMEOUT = 8000;
-const UA = 'web:BuyVEQT:1.0 (by /u/buyveqt)';
-
-/* ── OAuth token management ──────────────────────────────── */
-let oauthToken: { token: string; expiresAt: number } | null = null;
-
-async function getOAuthToken(): Promise<string | null> {
-  const clientId = process.env.REDDIT_CLIENT_ID;
-  const clientSecret = process.env.REDDIT_CLIENT_SECRET;
-  if (!clientId || !clientSecret) return null;
-
-  if (oauthToken && Date.now() < oauthToken.expiresAt - 60_000) {
-    return oauthToken.token;
-  }
-
-  try {
-    const res = await fetch('https://www.reddit.com/api/v1/access_token', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Basic ${btoa(`${clientId}:${clientSecret}`)}`,
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'User-Agent': UA,
-      },
-      body: 'grant_type=client_credentials',
-      cache: 'no-store',
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    if (!data.access_token) return null;
-
-    oauthToken = {
-      token: data.access_token,
-      expiresAt: Date.now() + (data.expires_in ?? 3600) * 1000,
-    };
-    return oauthToken.token;
-  } catch {
-    return null;
-  }
-}
+const PROXY_BASE = 'https://reddit-api.buyveqt.ca';
 
 /* ── Reddit response parser ──────────────────────────────── */
 function parseRedditListing(json: Record<string, unknown>): RedditPost[] {
@@ -81,7 +44,7 @@ function parseRedditListing(json: Record<string, unknown>): RedditPost[] {
     });
 }
 
-/* ── RSS fallback via rss2json (always works, no scores) ──── */
+/* ── RSS fallback via rss2json (no scores, but always works) ── */
 interface Rss2JsonItem {
   title: string;
   pubDate: string;
@@ -123,49 +86,22 @@ async function getRedditPostsRss(sort: string): Promise<RedditPost[]> {
   }
 }
 
-/* ── Main fetch with 3-tier fallback ─────────────────────── */
+/* ── Main fetch: Cloudflare proxy → RSS fallback ─────────── */
 export async function getRedditPosts(
   sort: 'hot' | 'new' | 'top' = 'hot',
   limit: number = 8,
   timeFilter?: 'hour' | 'day' | 'week' | 'month' | 'year' | 'all'
 ): Promise<RedditPost[]> {
-  // Tier 1: OAuth API (full data, not IP-blocked)
-  const token = await getOAuthToken();
-  if (token) {
-    try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), REDDIT_FETCH_TIMEOUT);
-
-      let url = `https://oauth.reddit.com/r/${SUBREDDIT}/${sort}?limit=${limit}&raw_json=1`;
-      if (sort === 'top' && timeFilter) url += `&t=${timeFilter}`;
-
-      const res = await fetch(url, {
-        signal: controller.signal,
-        headers: { 'Authorization': `Bearer ${token}`, 'User-Agent': UA },
-        next: { revalidate: 600 },
-      });
-      clearTimeout(timeout);
-
-      if (res.ok) {
-        const posts = parseRedditListing(await res.json());
-        if (posts.length > 0) return posts;
-      }
-    } catch {
-      // fall through
-    }
-  }
-
-  // Tier 2: Public JSON API (full data, blocked on Vercel)
+  // Tier 1: Cloudflare Worker proxy (full data, not blocked)
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), REDDIT_FETCH_TIMEOUT);
 
-    let url = `https://old.reddit.com/r/${SUBREDDIT}/${sort}.json?limit=${limit}&raw_json=1`;
+    let url = `${PROXY_BASE}/${sort}?limit=${limit}`;
     if (sort === 'top' && timeFilter) url += `&t=${timeFilter}`;
 
     const res = await fetch(url, {
       signal: controller.signal,
-      headers: { 'User-Agent': UA, 'Accept': 'application/json' },
       next: { revalidate: 600 },
     });
     clearTimeout(timeout);
@@ -175,60 +111,22 @@ export async function getRedditPosts(
       if (posts.length > 0) return posts;
     }
   } catch {
-    // fall through
+    // fall through to RSS
   }
 
-  // Tier 3: RSS (no scores/comments, but always works)
-  console.info(`[Reddit] JSON fetches failed for ${sort}, falling back to RSS`);
+  // Tier 2: RSS (no scores/comments, but always works)
   return getRedditPostsRss(sort);
 }
 
 export async function getSubredditStats(): Promise<SubredditStats | null> {
-  // Tier 1: OAuth
-  const token = await getOAuthToken();
-  if (token) {
-    try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), REDDIT_FETCH_TIMEOUT);
-
-      const res = await fetch(
-        `https://oauth.reddit.com/r/${SUBREDDIT}/about`,
-        {
-          signal: controller.signal,
-          headers: { 'Authorization': `Bearer ${token}`, 'User-Agent': UA },
-          next: { revalidate: 1800 },
-        }
-      );
-      clearTimeout(timeout);
-
-      if (res.ok) {
-        const json = await res.json();
-        const data = json?.data;
-        if (data) {
-          return {
-            subscribers: (data.subscribers as number) ?? 0,
-            activeUsers: (data.accounts_active as number) ?? null,
-          };
-        }
-      }
-    } catch {
-      // fall through
-    }
-  }
-
-  // Tier 2: Public JSON
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), REDDIT_FETCH_TIMEOUT);
 
-    const res = await fetch(
-      `https://old.reddit.com/r/${SUBREDDIT}/about.json`,
-      {
-        signal: controller.signal,
-        headers: { 'User-Agent': UA, 'Accept': 'application/json' },
-        next: { revalidate: 1800 },
-      }
-    );
+    const res = await fetch(`${PROXY_BASE}/about`, {
+      signal: controller.signal,
+      next: { revalidate: 1800 },
+    });
     clearTimeout(timeout);
     if (!res.ok) return null;
 

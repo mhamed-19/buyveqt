@@ -1,0 +1,10 @@
+name = "reddit-proxy"
+main = "index.js"
+compatibility_date = "2024-01-01"
+
+routes = [
+  { pattern = "reddit-api.buyveqt.ca/*", zone_id = "bd7f2a261a48482706793c6cb5269b85" }
+]
+
+[vars]
+ALLOWED_ORIGIN = "https://buyveqt.ca"
