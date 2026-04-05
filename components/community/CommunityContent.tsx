@@ -43,16 +43,20 @@ export default function CommunityContent({
   );
   const [loading, setLoading] = useState(false);
 
-  // Client-side fallback when server feeds are empty (Reddit blocks Vercel IPs)
+  // Client-side refresh when server data is empty OR missing scores
+  // (ISR cache may have stale RSS data without scores/comments)
   const serverEmpty = serverHot.length === 0 && serverNew.length === 0;
+  const serverMissingScores =
+    !serverEmpty && [...serverHot, ...serverNew].every((p) => p.score === 0);
+  const needsClientFetch = serverEmpty || serverMissingScores;
 
   useEffect(() => {
-    if (!serverEmpty) return;
+    if (!needsClientFetch) return;
 
     let cancelled = false;
-    setLoading(true);
+    // Only show loading skeleton when we have zero posts
+    if (serverEmpty) setLoading(true);
 
-    // Fetch from our API proxy which has RSS fallback built in
     fetch("/api/reddit")
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
@@ -76,7 +80,7 @@ export default function CommunityContent({
     return () => {
       cancelled = true;
     };
-  }, [serverEmpty]);
+  }, [needsClientFetch, serverEmpty]);
 
   const posts = clientFeeds[activeTab];
 
