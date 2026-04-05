@@ -53,7 +53,7 @@ export default function TodaySnapshot({
 }: TodaySnapshotProps) {
   if (loading) {
     return (
-      <div className="space-y-4 py-10 sm:py-14">
+      <div className="space-y-4 py-12 sm:py-16">
         <div className="skeleton h-16 w-48" />
         <div className="skeleton h-8 w-full" />
         <div className="skeleton h-[180px] w-full rounded-lg" />
@@ -63,7 +63,7 @@ export default function TodaySnapshot({
 
   if (!quote) {
     return (
-      <div className="py-10 sm:py-14">
+      <div className="py-12 sm:py-16">
         <DataUnavailable type="quote" />
       </div>
     );
@@ -80,7 +80,6 @@ export default function TodaySnapshot({
     { label: "1Y", value: historical.length >= 252 ? calcReturn(historical, 252) : null },
   ];
 
-  // Mini chart — last ~66 data points (~3 months)
   const chartSlice = historical.slice(-66);
   const chartPositive =
     chartSlice.length >= 2
@@ -95,11 +94,12 @@ export default function TodaySnapshot({
     : 100;
 
   return (
-    <div className="py-10 sm:py-14 space-y-6">
+    <div className="py-12 sm:py-16 space-y-8">
       {/* Price */}
       <div>
+        <p className="section-label mb-3">VEQT Today</p>
         <div className="flex items-baseline gap-3 flex-wrap">
-          <span className="text-4xl sm:text-5xl font-bold tabular-nums">
+          <span className="font-serif text-5xl sm:text-6xl font-normal tabular-nums tracking-tight">
             ${quote.price.toFixed(2)}
           </span>
           <span
@@ -115,7 +115,7 @@ export default function TodaySnapshot({
           </span>
         </div>
         {quoteSource && quoteFetchedAt && (
-          <div className="mt-1.5">
+          <div className="mt-2">
             <DataFreshness source={quoteSource} fetchedAt={quoteFetchedAt} />
           </div>
         )}
@@ -128,9 +128,9 @@ export default function TodaySnapshot({
           return (
             <div
               key={m.label}
-              className="rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] p-2.5 text-center"
+              className="card-editorial p-3 text-center"
             >
-              <p className="text-[10px] text-[var(--color-text-muted)] uppercase tracking-wide mb-0.5">
+              <p className="text-[10px] font-semibold text-[var(--color-text-muted)] uppercase tracking-widest mb-1">
                 {m.label}
               </p>
               <p
@@ -151,9 +151,9 @@ export default function TodaySnapshot({
 
       {/* Mini chart */}
       {chartSlice.length >= 2 && (
-        <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] p-4">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-semibold text-[var(--color-text-secondary)]">
+        <div className="card-editorial p-5">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
               Last 3 Months
             </h3>
             <Link

@@ -13,6 +13,7 @@ import LearnPreview from "@/components/LearnPreview";
 import CalculatorsPreview from "@/components/CalculatorsPreview";
 import CommunityWidget from "@/components/CommunityWidget";
 import TodaySnapshot from "@/components/TodaySnapshot";
+import AnimateIn from "@/components/ui/AnimateIn";
 
 type HomeView = "overview" | "today";
 
@@ -33,10 +34,10 @@ export default function Home() {
       <main className="flex-1 mx-auto w-full max-w-6xl px-4">
         {/* View Toggle */}
         <div className="pt-6 flex justify-center">
-          <div className="inline-flex rounded-lg bg-[var(--color-base)] p-1 gap-1">
+          <div className="inline-flex rounded-lg bg-[var(--color-base)] p-1 gap-1 border border-[var(--color-border)]">
             <button
               onClick={() => setView("overview")}
-              className={`rounded-md px-4 py-1.5 text-sm font-medium transition-all ${
+              className={`rounded-md px-5 py-1.5 text-sm font-medium transition-all ${
                 view === "overview"
                   ? "bg-[var(--color-card)] text-[var(--color-text-primary)] shadow-sm"
                   : "text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
@@ -46,7 +47,7 @@ export default function Home() {
             </button>
             <button
               onClick={() => setView("today")}
-              className={`rounded-md px-4 py-1.5 text-sm font-medium transition-all ${
+              className={`rounded-md px-5 py-1.5 text-sm font-medium transition-all ${
                 view === "today"
                   ? "bg-[var(--color-card)] text-[var(--color-text-primary)] shadow-sm"
                   : "text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
@@ -69,7 +70,7 @@ export default function Home() {
             />
 
             {/* Section 2: Price Chart + Sidebar */}
-            <section className="py-6">
+            <AnimateIn as="section" className="py-6">
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
                 <div className="lg:col-span-2">
                   <PriceChart
@@ -83,7 +84,7 @@ export default function Home() {
                 </div>
                 <SidebarCards />
               </div>
-            </section>
+            </AnimateIn>
           </>
         ) : (
           <TodaySnapshot
@@ -95,16 +96,32 @@ export default function Home() {
           />
         )}
 
-        {/* Below-the-fold sections always visible */}
-        <InsideVeqtPreview />
-        <ComparePreview />
-        <LearnPreview />
+        {/* Editorial divider */}
+        <div className="editorial-rule my-4" />
 
-        {/* Section 6: Calculators Preview */}
-        <CalculatorsPreview />
+        {/* Below-the-fold sections with scroll-triggered animations */}
+        <AnimateIn>
+          <InsideVeqtPreview />
+        </AnimateIn>
 
-        {/* Section 7: Community */}
-        <CommunityWidget />
+        <AnimateIn>
+          <ComparePreview />
+        </AnimateIn>
+
+        <AnimateIn>
+          <LearnPreview />
+        </AnimateIn>
+
+        {/* Editorial divider */}
+        <div className="editorial-rule my-4" />
+
+        <AnimateIn>
+          <CalculatorsPreview />
+        </AnimateIn>
+
+        <AnimateIn>
+          <CommunityWidget />
+        </AnimateIn>
       </main>
 
       <Footer />
