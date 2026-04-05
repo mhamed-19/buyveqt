@@ -5,47 +5,7 @@ export const runtime = 'edge';
 
 const SUBREDDIT = 'JustBuyVEQT';
 const REDDIT_TIMEOUT = 8000;
-const UA = 'web:BuyVEQT:1.0 (by /u/buyveqt)';
-
-/* ── OAuth token management ──────────────────────────────── */
-let oauthToken: { token: string; expiresAt: number } | null = null;
-
-async function getOAuthToken(): Promise<string | null> {
-  const clientId = process.env.REDDIT_CLIENT_ID;
-  const clientSecret = process.env.REDDIT_CLIENT_SECRET;
-  if (!clientId || !clientSecret) return null;
-
-  // Reuse cached token if still valid (with 60s buffer)
-  if (oauthToken && Date.now() < oauthToken.expiresAt - 60_000) {
-    return oauthToken.token;
-  }
-
-  try {
-    const res = await fetch('https://www.reddit.com/api/v1/access_token', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Basic ${btoa(`${clientId}:${clientSecret}`)}`,
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'User-Agent': UA,
-      },
-      body: 'grant_type=client_credentials',
-      cache: 'no-store',
-    });
-
-    if (!res.ok) return null;
-
-    const data = await res.json();
-    if (!data.access_token) return null;
-
-    oauthToken = {
-      token: data.access_token,
-      expiresAt: Date.now() + (data.expires_in ?? 3600) * 1000,
-    };
-    return oauthToken.token;
-  } catch {
-    return null;
-  }
-}
+const PROXY_BASE = 'https://reddit-api.buyveqt.ca';
 
 /* ── In-memory cache ─────────────────────────────────────── */
 interface CacheEntry<T> {
@@ -89,9 +49,8 @@ function parseRedditListing(json: Record<string, unknown>): RedditPost[] {
     });
 }
 
-/* ── Tier 1: OAuth API (oauth.reddit.com — not IP-blocked) ── */
-async function fetchPostsOAuth(
-  token: string,
+/* ── Fetch via Cloudflare Worker proxy (full data, always works) ── */
+async function fetchPostsProxy(
   sort: string,
   limit: number,
   timeFilter?: string
@@ -99,16 +58,12 @@ async function fetchPostsOAuth(
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), REDDIT_TIMEOUT);
 
-  let url = `https://oauth.reddit.com/r/${SUBREDDIT}/${sort}?limit=${limit}&raw_json=1`;
+  let url = `${PROXY_BASE}/${sort}?limit=${limit}`;
   if (sort === 'top' && timeFilter) url += `&t=${timeFilter}`;
 
   try {
     const res = await fetch(url, {
       signal: controller.signal,
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'User-Agent': UA,
-      },
       cache: 'no-store',
     });
     clearTimeout(timeout);
@@ -120,22 +75,15 @@ async function fetchPostsOAuth(
   }
 }
 
-async function fetchStatsOAuth(token: string): Promise<SubredditStats | null> {
+async function fetchStatsProxy(): Promise<SubredditStats | null> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), REDDIT_TIMEOUT);
 
   try {
-    const res = await fetch(
-      `https://oauth.reddit.com/r/${SUBREDDIT}/about`,
-      {
-        signal: controller.signal,
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'User-Agent': UA,
-        },
-        cache: 'no-store',
-      }
-    );
+    const res = await fetch(`${PROXY_BASE}/about`, {
+      signal: controller.signal,
+      cache: 'no-store',
+    });
     clearTimeout(timeout);
     if (!res.ok) return null;
 
@@ -152,34 +100,7 @@ async function fetchStatsOAuth(token: string): Promise<SubredditStats | null> {
   }
 }
 
-/* ── Tier 2: Public JSON API (blocked on Vercel, works locally) ── */
-async function fetchPostsPublic(
-  sort: string,
-  limit: number,
-  timeFilter?: string
-): Promise<RedditPost[]> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), REDDIT_TIMEOUT);
-
-  let url = `https://old.reddit.com/r/${SUBREDDIT}/${sort}.json?limit=${limit}&raw_json=1`;
-  if (sort === 'top' && timeFilter) url += `&t=${timeFilter}`;
-
-  try {
-    const res = await fetch(url, {
-      signal: controller.signal,
-      headers: { 'User-Agent': UA, 'Accept': 'application/json' },
-      cache: 'no-store',
-    });
-    clearTimeout(timeout);
-    if (!res.ok) return [];
-    return parseRedditListing(await res.json());
-  } catch {
-    clearTimeout(timeout);
-    return [];
-  }
-}
-
-/* ── Tier 3: RSS fallback via rss2json (always works, no scores) ── */
+/* ── RSS fallback via rss2json (no scores, but always works) ── */
 interface Rss2JsonItem {
   title: string;
   pubDate: string;
@@ -221,61 +142,18 @@ async function fetchPostsRss(sort: string): Promise<RedditPost[]> {
   }
 }
 
-/* ── Fetch with 3-tier fallback ──────────────────────────── */
+/* ── Fetch with fallback ─────────────────────────────────── */
 async function fetchPosts(
   sort: string,
   limit: number,
   timeFilter?: string
 ): Promise<RedditPost[]> {
-  // Tier 1: OAuth (full data, not IP-blocked)
-  const token = await getOAuthToken();
-  if (token) {
-    const posts = await fetchPostsOAuth(token, sort, limit, timeFilter);
-    if (posts.length > 0) return posts;
-  }
+  // Tier 1: Cloudflare Worker proxy (full data, not blocked)
+  const posts = await fetchPostsProxy(sort, limit, timeFilter);
+  if (posts.length > 0) return posts;
 
-  // Tier 2: Public JSON (full data, blocked on Vercel)
-  const publicPosts = await fetchPostsPublic(sort, limit, timeFilter);
-  if (publicPosts.length > 0) return publicPosts;
-
-  // Tier 3: RSS (no scores/comments, but always works)
+  // Tier 2: RSS (no scores, but always works)
   return fetchPostsRss(sort);
-}
-
-async function fetchStats(): Promise<SubredditStats | null> {
-  // Tier 1: OAuth
-  const token = await getOAuthToken();
-  if (token) {
-    const stats = await fetchStatsOAuth(token);
-    if (stats) return stats;
-  }
-
-  // Tier 2: Public JSON
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), REDDIT_TIMEOUT);
-  try {
-    const res = await fetch(
-      `https://old.reddit.com/r/${SUBREDDIT}/about.json`,
-      {
-        signal: controller.signal,
-        headers: { 'User-Agent': UA, 'Accept': 'application/json' },
-        cache: 'no-store',
-      }
-    );
-    clearTimeout(timeout);
-    if (!res.ok) return null;
-
-    const json = await res.json();
-    const data = json?.data;
-    if (!data) return null;
-    return {
-      subscribers: (data.subscribers as number) ?? 0,
-      activeUsers: (data.accounts_active as number) ?? null,
-    };
-  } catch {
-    clearTimeout(timeout);
-    return null;
-  }
 }
 
 /* ── Route handler ───────────────────────────────────────── */
@@ -321,7 +199,7 @@ export async function GET() {
 
   let stats = statsCache.data;
   if (!statsFresh) {
-    const freshStats = await fetchStats();
+    const freshStats = await fetchStatsProxy();
     if (freshStats) {
       stats = freshStats;
       statsCache = { data: freshStats, fetchedAt: now };
