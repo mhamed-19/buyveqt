@@ -8,7 +8,7 @@ export function OwnershipStructure() {
         <div className="flex items-center gap-2 mb-3">
           <span
             className="inline-block w-3 h-3 rounded-full"
-            style={{ backgroundColor: "var(--color-positive)" }}
+            style={{ backgroundColor: "var(--color-vanguard, #c4122f)" }}
           />
           <p className="text-sm font-bold text-[var(--color-text-primary)]">
             Vanguard — Mutual Ownership
@@ -24,27 +24,27 @@ export function OwnershipStructure() {
           </div>
           <div className="flex justify-center">
             <div className="flex flex-col items-center">
-              <div className="w-px h-3 bg-[var(--color-positive)]" />
+              <div className="w-px h-3 bg-[var(--color-vanguard, #c4122f)]" />
               <svg
                 width="8"
                 height="6"
                 viewBox="0 0 8 6"
-                className="text-[var(--color-positive)]"
+                className="text-[var(--color-vanguard, #c4122f)]"
               >
                 <path d="M4 6L0 0h8z" fill="currentColor" />
               </svg>
-              <span className="text-[10px] text-[var(--color-positive)] font-medium mt-0.5">
+              <span className="text-[10px] text-[var(--color-vanguard, #c4122f)] font-medium mt-0.5">
                 own
               </span>
               <svg
                 width="8"
                 height="6"
                 viewBox="0 0 8 6"
-                className="text-[var(--color-positive)] rotate-180"
+                className="text-[var(--color-vanguard, #c4122f)] rotate-180"
               >
                 <path d="M4 6L0 0h8z" fill="currentColor" />
               </svg>
-              <div className="w-px h-3 bg-[var(--color-positive)]" />
+              <div className="w-px h-3 bg-[var(--color-vanguard, #c4122f)]" />
             </div>
           </div>
           <div className="rounded-md bg-[var(--color-base)] border border-[var(--color-border)] px-3 py-2 text-center">
@@ -54,31 +54,31 @@ export function OwnershipStructure() {
           </div>
           <div className="flex justify-center">
             <div className="flex flex-col items-center">
-              <div className="w-px h-3 bg-[var(--color-positive)]" />
+              <div className="w-px h-3 bg-[var(--color-vanguard, #c4122f)]" />
               <svg
                 width="8"
                 height="6"
                 viewBox="0 0 8 6"
-                className="text-[var(--color-positive)]"
+                className="text-[var(--color-vanguard, #c4122f)]"
               >
                 <path d="M4 6L0 0h8z" fill="currentColor" />
               </svg>
-              <span className="text-[10px] text-[var(--color-positive)] font-medium mt-0.5">
+              <span className="text-[10px] text-[var(--color-vanguard, #c4122f)] font-medium mt-0.5">
                 own
               </span>
               <svg
                 width="8"
                 height="6"
                 viewBox="0 0 8 6"
-                className="text-[var(--color-positive)] rotate-180"
+                className="text-[var(--color-vanguard, #c4122f)] rotate-180"
               >
                 <path d="M4 6L0 0h8z" fill="currentColor" />
               </svg>
-              <div className="w-px h-3 bg-[var(--color-positive)]" />
+              <div className="w-px h-3 bg-[var(--color-vanguard, #c4122f)]" />
             </div>
           </div>
-          <div className="rounded-md bg-[var(--color-base)] border border-[var(--color-positive)] border-dashed px-3 py-2 text-center">
-            <p className="text-xs font-semibold text-[var(--color-positive)]">
+          <div className="rounded-md bg-[var(--color-base)] border border-[var(--color-vanguard, #c4122f)] border-dashed px-3 py-2 text-center">
+            <p className="text-xs font-semibold text-[var(--color-vanguard, #c4122f)]">
               Vanguard (the company)
             </p>
           </div>
@@ -86,7 +86,7 @@ export function OwnershipStructure() {
 
         <div className="rounded-md bg-[var(--color-base)] border border-[var(--color-border)] p-3">
           <p className="text-xs text-[var(--color-text-secondary)] leading-relaxed">
-            <strong className="text-[var(--color-positive)]">
+            <strong className="text-[var(--color-vanguard, #c4122f)]">
               Circular ownership:
             </strong>{" "}
             Investors own the funds, the funds own the company. Fee cuts benefit
@@ -100,7 +100,7 @@ export function OwnershipStructure() {
         <div className="flex items-center gap-2 mb-3">
           <span
             className="inline-block w-3 h-3 rounded-full"
-            style={{ backgroundColor: "var(--color-text-muted)" }}
+            style={{ backgroundColor: "var(--color-blackrock, #1a6dca)" }}
           />
           <p className="text-sm font-bold text-[var(--color-text-primary)]">
             BlackRock — Public Company
@@ -115,8 +115,8 @@ export function OwnershipStructure() {
                 You (fund investor)
               </p>
             </div>
-            <div className="flex-1 rounded-md bg-[var(--color-base)] border border-[var(--color-negative)] border-dashed px-3 py-2 text-center">
-              <p className="text-xs font-semibold text-[var(--color-negative)]">
+            <div className="flex-1 rounded-md bg-[var(--color-base)] border border-[var(--color-blackrock,#1a6dca)] border-dashed px-3 py-2 text-center">
+              <p className="text-xs font-semibold text-[var(--color-blackrock,#1a6dca)]">
                 BLK shareholders
               </p>
             </div>
@@ -124,32 +124,32 @@ export function OwnershipStructure() {
           <div className="flex">
             <div className="flex-1 flex justify-center">
               <div className="flex flex-col items-center">
-                <div className="w-px h-3 bg-[var(--color-text-muted)]" />
+                <div className="w-px h-3 bg-[var(--color-blackrock, #1a6dca)]" />
                 <svg
                   width="8"
                   height="6"
                   viewBox="0 0 8 6"
-                  className="text-[var(--color-text-muted)]"
+                  className="text-[var(--color-blackrock, #1a6dca)]"
                 >
                   <path d="M4 6L0 0h8z" fill="currentColor" />
                 </svg>
-                <span className="text-[10px] text-[var(--color-text-muted)] font-medium mt-0.5">
+                <span className="text-[10px] text-[var(--color-blackrock, #1a6dca)] font-medium mt-0.5">
                   invest in
                 </span>
               </div>
             </div>
             <div className="flex-1 flex justify-center">
               <div className="flex flex-col items-center">
-                <div className="w-px h-3 bg-[var(--color-negative)]" />
+                <div className="w-px h-3 bg-[var(--color-blackrock,#1a6dca)]" />
                 <svg
                   width="8"
                   height="6"
                   viewBox="0 0 8 6"
-                  className="text-[var(--color-negative)]"
+                  className="text-[var(--color-blackrock,#1a6dca)]"
                 >
                   <path d="M4 6L0 0h8z" fill="currentColor" />
                 </svg>
-                <span className="text-[10px] text-[var(--color-negative)] font-medium mt-0.5">
+                <span className="text-[10px] text-[var(--color-blackrock,#1a6dca)] font-medium mt-0.5">
                   own
                 </span>
               </div>
@@ -170,7 +170,7 @@ export function OwnershipStructure() {
           <div className="flex">
             <div className="flex-1 flex justify-center">
               <div className="flex flex-col items-center">
-                <span className="text-[10px] text-[var(--color-text-muted)] font-medium">
+                <span className="text-[10px] text-[var(--color-blackrock, #1a6dca)] font-medium">
                   managed by →
                 </span>
               </div>
