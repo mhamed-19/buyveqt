@@ -47,7 +47,7 @@ function CustomTooltip({
   if (!active || !payload?.length || !label) return null;
   const date = new Date(label + "T00:00:00");
   return (
-    <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] px-3 py-2 shadow-md">
+    <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] px-3 py-2 shadow-lg">
       <p className="text-[11px] text-[var(--color-text-muted)]">
         {date.toLocaleDateString("en-CA", {
           weekday: "short",
@@ -56,8 +56,8 @@ function CustomTooltip({
           day: "numeric",
         })}
       </p>
-      <p className="text-sm font-semibold text-[var(--color-text-primary)]">
-        ${payload[0].value.toFixed(2)} CAD
+      <p className="font-serif text-base font-normal text-[var(--color-text-primary)]">
+        ${payload[0].value.toFixed(2)} <span className="text-xs text-[var(--color-text-muted)]">CAD</span>
       </p>
     </div>
   );
@@ -79,9 +79,9 @@ export default function PriceChart({
   const chartUnavailable = !loading && data.length === 0;
 
   return (
-    <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] p-4 sm:p-5">
-      <div className="flex items-center justify-between gap-3 mb-2">
-        <h2 className="text-sm font-semibold text-[var(--color-text-secondary)]">
+    <div className="card-editorial p-4 sm:p-5">
+      <div className="flex items-center justify-between gap-3 mb-3">
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
           VEQT.TO Price History
         </h2>
         <div className="flex gap-0.5 rounded-lg bg-[var(--color-base)] p-0.5">
@@ -101,7 +101,6 @@ export default function PriceChart({
         </div>
       </div>
 
-      {/* Stale banner above chart */}
       {isCache && historyFetchedAt && (
         <StaleBanner fetchedAt={historyFetchedAt} className="mb-3" />
       )}
@@ -119,7 +118,7 @@ export default function PriceChart({
                   <stop
                     offset="5%"
                     stopColor="var(--color-chart-line)"
-                    stopOpacity={0.12}
+                    stopOpacity={0.14}
                   />
                   <stop
                     offset="95%"
@@ -166,7 +165,6 @@ export default function PriceChart({
         )}
       </div>
 
-      {/* Data freshness footer */}
       <div className="mt-2">
         {historySource && historyFetchedAt ? (
           <DataFreshness source={historySource} fetchedAt={historyFetchedAt} />

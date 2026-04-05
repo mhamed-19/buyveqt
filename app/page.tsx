@@ -11,6 +11,7 @@ import ComparePreview from "@/components/ComparePreview";
 import LearnPreview from "@/components/LearnPreview";
 import CalculatorsPreview from "@/components/CalculatorsPreview";
 import CommunityWidget from "@/components/CommunityWidget";
+import AnimateIn from "@/components/ui/AnimateIn";
 
 export default function Home() {
   const { data, loading, period, setPeriod } = useVeqtData();
@@ -36,7 +37,7 @@ export default function Home() {
         />
 
         {/* 2. Price Chart + Sidebar */}
-        <section className="py-6">
+        <AnimateIn as="section" className="py-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
             <div className="lg:col-span-2">
               <PriceChart
@@ -55,22 +56,38 @@ export default function Home() {
               quoteFetchedAt={data?.quoteFetchedAt}
             />
           </div>
-        </section>
+        </AnimateIn>
 
-        {/* 3. Calculators (moved up) */}
-        <CalculatorsPreview />
+        {/* Editorial divider */}
+        <div className="editorial-rule my-4" />
+
+        {/* 3. Calculators */}
+        <AnimateIn>
+          <CalculatorsPreview />
+        </AnimateIn>
 
         {/* 4. What's inside VEQT */}
-        <InsideVeqtPreview />
+        <AnimateIn>
+          <InsideVeqtPreview />
+        </AnimateIn>
 
         {/* 5. Comparison table */}
-        <ComparePreview />
+        <AnimateIn>
+          <ComparePreview />
+        </AnimateIn>
 
         {/* 6. Learn articles */}
-        <LearnPreview />
+        <AnimateIn>
+          <LearnPreview />
+        </AnimateIn>
+
+        {/* Editorial divider */}
+        <div className="editorial-rule my-4" />
 
         {/* 7. Community */}
-        <CommunityWidget />
+        <AnimateIn>
+          <CommunityWidget />
+        </AnimateIn>
       </main>
 
       <Footer />

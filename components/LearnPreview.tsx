@@ -3,11 +3,12 @@ import { LEARN_ARTICLES } from "@/lib/constants";
 
 export default function LearnPreview() {
   return (
-    <section className="py-10">
-      <h2 className="text-xl font-bold text-[var(--color-text-primary)] mb-1">
+    <section className="py-12">
+      <p className="section-label mb-2">Research</p>
+      <h2 className="font-serif text-2xl sm:text-3xl font-normal text-[var(--color-text-primary)] mb-1.5">
         Learn
       </h2>
-      <p className="text-sm text-[var(--color-text-muted)] mb-5">
+      <p className="text-sm text-[var(--color-text-muted)] mb-6">
         Guides and explainers for VEQT investors.
       </p>
 
@@ -18,24 +19,24 @@ export default function LearnPreview() {
             <Link
               key={article.slug}
               href={`/learn/${article.slug}`}
-              className={`group rounded-lg border bg-[var(--color-card)] p-5 transition-colors ${
+              className={`group card-editorial p-5 transition-all ${
                 isEditorial
-                  ? "border-[var(--color-brand)]/40 hover:border-[var(--color-brand)]"
-                  : "border-[var(--color-border)] hover:border-[var(--color-border-light)]"
+                  ? "border-[var(--color-brand)]/30 hover:border-[var(--color-brand)]/60"
+                  : ""
               }`}
             >
               {isEditorial && (
-                <span className="inline-block text-[10px] font-semibold uppercase tracking-wider text-[var(--color-brand)] mb-1.5">
+                <span className="inline-block text-[10px] font-semibold uppercase tracking-widest text-[var(--color-brand)] mb-2">
                   Our Take
                 </span>
               )}
-              <h3 className="text-sm font-semibold text-[var(--color-text-primary)] group-hover:text-[var(--color-brand)] transition-colors">
+              <h3 className="font-serif text-base font-normal text-[var(--color-text-primary)] group-hover:text-[var(--color-brand)] transition-colors leading-snug">
                 {article.title}
               </h3>
-              <p className="text-sm text-[var(--color-text-muted)] mt-2 leading-relaxed">
+              <p className="text-sm text-[var(--color-text-muted)] mt-2.5 leading-relaxed">
                 {article.teaser}
               </p>
-              <span className="inline-block mt-3 text-sm font-medium text-[var(--color-brand)]">
+              <span className="inline-block mt-4 text-sm font-medium text-[var(--color-brand)]">
                 Read more &rarr;
               </span>
             </Link>

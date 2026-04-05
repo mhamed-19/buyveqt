@@ -102,9 +102,9 @@ export default function ChartSidebar({
   return (
     <div className="flex flex-col gap-4">
       {/* ── Widget 1: Performance Returns ── */}
-      <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] p-5">
+      <div className="card-editorial p-5">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-[var(--color-text-secondary)]">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
             Returns
           </h3>
           <Link
@@ -164,7 +164,7 @@ export default function ChartSidebar({
       {/* ── Widget 2: New to VEQT? ── */}
       <Link
         href="/learn/getting-started-with-veqt"
-        className="group relative rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] p-5 overflow-hidden hover:border-[var(--color-brand)]/40 transition-all"
+        className="group relative card-editorial p-5 overflow-hidden hover:border-[var(--color-brand)]/40 transition-all"
       >
         {/* Decorative gradient accent */}
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[var(--color-brand)] via-[var(--color-chart-line)] to-[#8b5cf6]" />
@@ -200,7 +200,7 @@ export default function ChartSidebar({
       </Link>
 
       {/* ── Widget 3: Quick Calculator ── */}
-      <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] p-5">
+      <div className="card-editorial p-5">
         <div className="flex items-start gap-3 mb-4">
           <div className="shrink-0 w-9 h-9 rounded-lg bg-[var(--color-chart-line)]/[0.08] flex items-center justify-center">
             <svg
@@ -213,7 +213,7 @@ export default function ChartSidebar({
             </svg>
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-[var(--color-text-secondary)]">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
               If you invested&hellip;
             </h3>
             <p className="text-[11px] text-[var(--color-text-muted)] mt-0.5">
