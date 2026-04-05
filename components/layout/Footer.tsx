@@ -82,7 +82,7 @@ export default function Footer() {
             {DISCLAIMER}
           </p>
           <p className="text-xs text-[var(--color-text-muted)] shrink-0">
-            &copy; {new Date().getFullYear()} BuyVEQT.com
+            &copy; {new Date().getFullYear()} BuyVEQT.ca
           </p>
         </div>
       </div>
