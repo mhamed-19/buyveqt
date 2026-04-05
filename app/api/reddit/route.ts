@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import type { RedditPost, SubredditStats } from '@/lib/data/reddit';
 
+export const runtime = 'edge';
+
 const SUBREDDIT = 'JustBuyVEQT';
 const REDDIT_TIMEOUT = 8000;
 const UA = 'BuyVEQT/1.0 (community site)';
@@ -32,7 +34,7 @@ async function fetchPosts(
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), REDDIT_TIMEOUT);
 
-  let url = `https://www.reddit.com/r/${SUBREDDIT}/${sort}.json?limit=${limit}&raw_json=1`;
+  let url = `https://old.reddit.com/r/${SUBREDDIT}/${sort}.json?limit=${limit}&raw_json=1`;
   if (sort === 'top' && timeFilter) url += `&t=${timeFilter}`;
 
   try {
