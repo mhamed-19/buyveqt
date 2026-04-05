@@ -1,7 +1,5 @@
 import { AssetAllocation, VeqtQuote } from "./types";
 
-export const VEQT_TICKER = "VEQT.TO";
-
 export const STATIC_DATA = {
   mer: 0.2,
   aum: "$12.2B",
@@ -59,12 +57,6 @@ export const COMPARISON_DATA = {
       inception: "Jan 2022",
     },
   ],
-};
-
-export const LATEST_DISTRIBUTION = {
-  amount: "$0.76018",
-  exDivDate: "Dec 30, 2025",
-  payableDate: "Jan 7, 2026",
 };
 
 export const LEARN_ARTICLES = [

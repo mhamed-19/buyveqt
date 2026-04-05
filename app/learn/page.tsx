@@ -72,7 +72,7 @@ export default function LearnPage() {
       <main className="flex-1 mx-auto w-full max-w-6xl px-4 py-8">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-2xl sm:text-3xl font-bold text-[var(--color-text-primary)]">
+          <h1 className="text-2xl sm:text-3xl font-serif font-normal text-[var(--color-text-primary)]">
             Learn
           </h1>
           <p className="mt-2 text-[var(--color-text-secondary)] max-w-2xl">

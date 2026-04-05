@@ -46,7 +46,7 @@ function ExpandableSection({
   return (
     <section className="scroll-mt-24">
       <div className="mb-4 border-l-3 border-[var(--color-brand)] pl-4">
-        <h2 className="text-xl font-bold text-[var(--color-text-primary)]">
+        <h2 className="text-xl font-serif font-normal text-[var(--color-text-primary)]">
           {section.heading}
         </h2>
         <p className="mt-1 text-sm text-[var(--color-text-muted)]">
