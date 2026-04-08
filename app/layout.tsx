@@ -204,15 +204,11 @@ export default function RootLayout({
         <ThemeProvider>{children}</ThemeProvider>
         <Analytics />
         <SpeedInsights />
-        {process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID && (
-          <Script
-            async
-            defer
-            src={process.env.NEXT_PUBLIC_UMAMI_SCRIPT_URL || "https://analytics.buyveqt.ca/script.js"}
-            data-website-id={process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID}
-            strategy="afterInteractive"
-          />
-        )}
+        <Script
+          data-goatcounter="https://buyveqt.goatcounter.com/count"
+          src="//gc.zgo.at/count.js"
+          strategy="afterInteractive"
+        />
       </body>
     </html>
   );
