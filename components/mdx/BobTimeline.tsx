@@ -1,186 +1,376 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
-interface Purchase {
+interface Step {
   year: number;
   event: string;
-  invested: string;
-  crash: string;
+  invested: number;
+  runningTotal: number;
+  crash: number;
   description: string;
+  afterCrashFeeling: string;
 }
 
-const PURCHASES: Purchase[] = [
+const STEPS: Step[] = [
   {
     year: 1973,
     event: "Oil Crisis Peak",
-    invested: "$6,000",
-    crash: "-48%",
+    invested: 6000,
+    runningTotal: 6000,
+    crash: -48,
     description:
-      "Bob invested right before the oil embargo and stagflation. The market dropped 48% — his $6,000 was cut nearly in half. He didn't sell.",
+      "Bob invests his first $6,000 right before the oil embargo tanks the market. Nearly half his money evaporates.",
+    afterCrashFeeling: "Bob doesn\u2019t sell.",
   },
   {
     year: 1987,
     event: "Black Monday Peak",
-    invested: "$46,000",
-    crash: "-34%",
+    invested: 46000,
+    runningTotal: 52000,
+    crash: -34,
     description:
-      "Bob invested his savings the day before the largest single-day crash in history — a 22% drop in one day, 34% total decline. He didn't sell.",
+      "Bob\u2019s been saving for 14 years. He invests $46,000 the day before the largest single-day crash in history \u2014 a 22% drop in one day.",
+    afterCrashFeeling: "Bob doesn\u2019t sell.",
   },
   {
     year: 2000,
     event: "Dot-Com Peak",
-    invested: "$68,000",
-    crash: "-49%",
+    invested: 68000,
+    runningTotal: 120000,
+    crash: -49,
     description:
-      "Bob invested at the peak of the tech bubble. The market dropped 49% over the next two years. He didn't sell.",
+      "Bob invests $68,000 at the peak of the tech bubble. The market drops 49% over the next two years. His coworkers think he\u2019s crazy.",
+    afterCrashFeeling: "Bob doesn\u2019t sell.",
   },
   {
     year: 2007,
     event: "Financial Crisis Peak",
-    invested: "$64,000",
-    crash: "-57%",
+    invested: 64000,
+    runningTotal: 184000,
+    crash: -57,
     description:
-      "Bob invested right before the worst financial crisis since the Great Depression. Stocks lost 57%. He didn't sell.",
+      "Bob invests $64,000 right before the worst financial crisis since the Great Depression. Banks collapse. Stocks lose 57%.",
+    afterCrashFeeling: "Bob doesn\u2019t sell.",
   },
 ];
 
-const TOTAL_INVESTED = "$184,000";
-const FINAL_VALUE = "~$1.16M";
+function formatDollars(value: number): string {
+  return "$" + value.toLocaleString("en-CA");
+}
+
+function AnimatedNumber({
+  value,
+  duration = 600,
+  className,
+  prefix = "",
+  suffix = "",
+}: {
+  value: number;
+  duration?: number;
+  className?: string;
+  prefix?: string;
+  suffix?: string;
+}) {
+  const [display, setDisplay] = useState(0);
+  const prevValue = useRef(0);
+  const rafRef = useRef<number>(0);
+
+  useEffect(() => {
+    const start = prevValue.current;
+    const diff = value - start;
+    const startTime = performance.now();
+
+    function animate(now: number) {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      // ease-out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setDisplay(Math.round(start + diff * eased));
+      if (progress < 1) {
+        rafRef.current = requestAnimationFrame(animate);
+      }
+    }
+
+    rafRef.current = requestAnimationFrame(animate);
+    prevValue.current = value;
+
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [value, duration]);
+
+  return (
+    <span className={className}>
+      {prefix}
+      {display.toLocaleString("en-CA")}
+      {suffix}
+    </span>
+  );
+}
 
 export function BobTimeline() {
-  const [selected, setSelected] = useState<number | null>(null);
-  const selectedPurchase = selected !== null ? PURCHASES[selected] : null;
+  const [step, setStep] = useState(-1); // -1 = intro, 0-3 = purchases, 4 = reveal
+  const [showCrash, setShowCrash] = useState(false);
+  const [showHold, setShowHold] = useState(false);
+
+  const isIntro = step === -1;
+  const isReveal = step === 4;
+  const currentStep = step >= 0 && step <= 3 ? STEPS[step] : null;
+
+  // Reset crash/hold animations when step changes
+  useEffect(() => {
+    setShowCrash(false);
+    setShowHold(false);
+
+    if (step >= 0 && step <= 3) {
+      const crashTimer = setTimeout(() => setShowCrash(true), 400);
+      const holdTimer = setTimeout(() => setShowHold(true), 1200);
+      return () => {
+        clearTimeout(crashTimer);
+        clearTimeout(holdTimer);
+      };
+    }
+  }, [step]);
+
+  function next() {
+    if (step < 4) setStep(step + 1);
+  }
+
+  function prev() {
+    if (step > -1) setStep(step - 1);
+  }
+
+  function restart() {
+    setStep(-1);
+  }
+
+  // Running total up to current step
+  const totalInvested =
+    step >= 0 && step <= 3
+      ? STEPS[step].runningTotal
+      : step === 4
+        ? 184000
+        : 0;
+
+  // Progress dots
+  const totalSteps = 6; // intro + 4 purchases + reveal
 
   return (
     <div className="my-6 rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] p-5 sm:p-6">
+      {/* Header */}
       <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-1">
-        Bob&apos;s Four Purchases — All at the Worst Possible Time
+        Bob, the World&apos;s Worst Market Timer
       </h3>
-      <p className="text-sm text-[var(--color-text-muted)] mb-5">
-        Bob only invested right before major crashes. Select each purchase to see
-        what happened.
+      <p className="text-sm text-[var(--color-text-muted)] mb-4">
+        Step through Bob&apos;s four purchases — each one at the absolute worst
+        possible moment.
       </p>
 
-      {/* Timeline bar */}
-      <div className="relative mb-4">
-        <div className="h-0.5 bg-[var(--color-border)] w-full absolute top-3" />
-        <div className="flex justify-between relative">
-          {PURCHASES.map((purchase, i) => {
-            const isSelected = selected === i;
-            return (
-              <button
-                key={purchase.year}
-                onClick={() => setSelected(isSelected ? null : i)}
-                className="flex flex-col items-center group relative z-10"
-              >
-                <div
-                  className={`w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all ${
-                    isSelected
-                      ? "bg-[var(--color-negative)] border-[var(--color-negative)] scale-125"
-                      : "bg-[var(--color-card)] border-[var(--color-border)] group-hover:border-[var(--color-negative)]"
-                  }`}
-                >
-                  <div
-                    className={`w-2.5 h-2.5 rounded-full ${
-                      isSelected
-                        ? "bg-white"
-                        : "bg-[var(--color-negative)] opacity-60"
-                    }`}
-                  />
-                </div>
-                <span
-                  className={`text-[10px] font-bold tabular-nums mt-1 ${
-                    isSelected
-                      ? "text-[var(--color-negative)]"
-                      : "text-[var(--color-text-muted)]"
-                  }`}
-                >
-                  {purchase.year}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+      {/* Progress bar */}
+      <div className="flex items-center gap-1.5 mb-5">
+        {Array.from({ length: totalSteps }).map((_, i) => (
+          <div
+            key={i}
+            className="h-1 flex-1 rounded-full transition-all duration-300"
+            style={{
+              backgroundColor:
+                i <= step + 1
+                  ? isReveal
+                    ? "var(--color-positive)"
+                    : "var(--color-brand)"
+                  : "var(--color-border)",
+            }}
+          />
+        ))}
       </div>
 
-      {/* Detail card */}
-      {selectedPurchase ? (
-        <div className="rounded-md border border-[var(--color-border)] bg-[var(--color-base)] p-4 mb-3">
-          <div className="flex items-start justify-between gap-3 mb-3">
-            <div>
-              <p className="text-sm font-bold text-[var(--color-text-primary)]">
-                {selectedPurchase.event}
+      {/* Content area — fixed height to prevent layout shift */}
+      <div className="min-h-[280px] sm:min-h-[240px] flex flex-col">
+        {/* INTRO */}
+        {isIntro && (
+          <div className="flex-1 flex flex-col items-center justify-center text-center px-4 py-6">
+            <div className="text-4xl mb-4">📉</div>
+            <p className="text-lg font-semibold text-[var(--color-text-primary)] mb-2">
+              Meet Bob.
+            </p>
+            <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed max-w-md">
+              Bob is the unluckiest investor in history. He only invested his
+              money at the absolute worst times — right before every major
+              market crash. Let&apos;s see how he did.
+            </p>
+          </div>
+        )}
+
+        {/* PURCHASE STEPS */}
+        {currentStep && (
+          <div className="flex-1 flex flex-col">
+            {/* Year + Event header */}
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex items-center justify-center w-12 h-12 rounded-full bg-[var(--color-negative)]/10 border border-[var(--color-negative)]/30 shrink-0">
+                <span className="text-sm font-bold text-[var(--color-negative)]">
+                  {currentStep.year}
+                </span>
+              </div>
+              <div>
+                <p className="text-base font-bold text-[var(--color-text-primary)]">
+                  {currentStep.event}
+                </p>
+                <p className="text-xs text-[var(--color-text-muted)]">
+                  Purchase {step + 1} of 4
+                </p>
+              </div>
+            </div>
+
+            {/* Investment amount */}
+            <div className="rounded-md border border-[var(--color-border)] bg-[var(--color-base)] p-4 mb-3">
+              <p className="text-xs text-[var(--color-text-muted)] mb-1">
+                Bob invests
               </p>
-              <p className="text-xs text-[var(--color-text-muted)]">
-                {selectedPurchase.year}
+              <p className="text-2xl font-bold tabular-nums text-[var(--color-text-primary)]">
+                {formatDollars(currentStep.invested)}
               </p>
             </div>
-            <div className="flex gap-3 text-right">
-              <div>
-                <p className="text-xs text-[var(--color-text-muted)]">
-                  Invested
-                </p>
-                <p className="text-base font-bold text-[var(--color-text-primary)]">
-                  {selectedPurchase.invested}
-                </p>
+
+            {/* Crash reveal */}
+            <div
+              className="rounded-md border p-4 mb-3 transition-all duration-500"
+              style={{
+                borderColor: showCrash
+                  ? "var(--color-negative)"
+                  : "var(--color-border)",
+                backgroundColor: showCrash
+                  ? "rgba(239, 68, 68, 0.05)"
+                  : "var(--color-base)",
+                opacity: showCrash ? 1 : 0.3,
+                transform: showCrash ? "scale(1)" : "scale(0.98)",
+              }}
+            >
+              <p className="text-xs text-[var(--color-text-muted)] mb-1">
+                Then the market crashes
+              </p>
+              <div className="flex items-baseline gap-2">
+                {showCrash ? (
+                  <AnimatedNumber
+                    value={currentStep.crash}
+                    className="text-2xl font-bold tabular-nums text-[var(--color-negative)]"
+                    suffix="%"
+                    duration={800}
+                  />
+                ) : (
+                  <span className="text-2xl font-bold tabular-nums text-[var(--color-text-muted)]">
+                    ...
+                  </span>
+                )}
               </div>
-              <div>
-                <p className="text-xs text-[var(--color-text-muted)]">
-                  Then Crashed
+              {showCrash && (
+                <p className="text-xs text-[var(--color-text-secondary)] leading-relaxed mt-2">
+                  {currentStep.description}
                 </p>
-                <p className="text-base font-bold text-[var(--color-negative)]">
-                  {selectedPurchase.crash}
-                </p>
-              </div>
+              )}
+            </div>
+
+            {/* "Bob doesn't sell" */}
+            <div
+              className="rounded-md border border-[var(--color-positive)]/30 bg-[var(--color-positive-bg)] p-3 transition-all duration-500"
+              style={{
+                opacity: showHold ? 1 : 0,
+                transform: showHold ? "translateY(0)" : "translateY(8px)",
+              }}
+            >
+              <p className="text-sm font-semibold text-[var(--color-positive)] text-center">
+                {currentStep.afterCrashFeeling}
+              </p>
             </div>
           </div>
-          <p className="text-xs text-[var(--color-text-secondary)] leading-relaxed">
-            {selectedPurchase.description}
-          </p>
-        </div>
-      ) : (
-        <div className="rounded-md border border-dashed border-[var(--color-border)] bg-[var(--color-base)] p-4 mb-3 text-center">
-          <p className="text-xs text-[var(--color-text-muted)]">
-            Select a purchase on the timeline above to see details
-          </p>
+        )}
+
+        {/* REVEAL */}
+        {isReveal && (
+          <div className="flex-1 flex flex-col items-center justify-center text-center py-4">
+            <p className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)] mb-2">
+              Total invested over 34 years
+            </p>
+            <p className="text-xl font-bold tabular-nums text-[var(--color-text-primary)] mb-4">
+              {formatDollars(184000)}
+            </p>
+
+            <div className="text-2xl text-[var(--color-positive)] mb-4">
+              &darr;
+            </div>
+
+            <p className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)] mb-2">
+              Final portfolio value (2013)
+            </p>
+            <AnimatedNumber
+              value={1160000}
+              className="text-4xl sm:text-5xl font-bold tabular-nums text-[var(--color-positive)]"
+              prefix="$"
+              duration={1500}
+            />
+
+            <div className="mt-5 rounded-md border border-[var(--color-positive)]/20 bg-[var(--color-positive-bg)] p-3 max-w-sm">
+              <p className="text-xs text-[var(--color-text-secondary)] leading-relaxed">
+                <strong className="text-[var(--color-positive)]">
+                  Bob&apos;s only rule:
+                </strong>{" "}
+                never sell. Despite the worst timing imaginable, holding through
+                every crash produced an annualized return of roughly 9%.
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Running total bar (visible during purchase steps) */}
+      {step >= 0 && step <= 3 && (
+        <div className="flex items-center justify-between rounded-md bg-[var(--color-base)] border border-[var(--color-border)] px-4 py-2 mt-3">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
+            Running total invested
+          </span>
+          <AnimatedNumber
+            value={totalInvested}
+            className="text-sm font-bold tabular-nums text-[var(--color-text-primary)]"
+            prefix="$"
+          />
         </div>
       )}
 
-      {/* Result box */}
-      <div className="rounded-md bg-[var(--color-positive-bg)] border border-[var(--color-positive)]/20 p-4">
-        <div className="flex items-center justify-between gap-4 mb-2">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
-              Total Invested
-            </p>
-            <p className="text-lg font-bold tabular-nums text-[var(--color-text-primary)]">
-              {TOTAL_INVESTED}
-            </p>
-          </div>
-          <div className="text-2xl text-[var(--color-positive)]">&rarr;</div>
-          <div className="text-right">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
-              Final Value (2013)
-            </p>
-            <p className="text-lg sm:text-xl font-bold tabular-nums text-[var(--color-positive)]">
-              {FINAL_VALUE}
-            </p>
-          </div>
-        </div>
-        <p className="text-xs text-[var(--color-text-secondary)] leading-relaxed">
-          <strong className="text-[var(--color-positive)]">
-            Bob&apos;s secret:
-          </strong>{" "}
-          He never sold. Despite buying at the four worst peaks in modern market
-          history, holding through every crash turned {TOTAL_INVESTED} into over
-          $1 million — an annualized return of roughly 9%.
-        </p>
+      {/* Navigation */}
+      <div className="flex items-center justify-between mt-4">
+        <button
+          onClick={isReveal ? restart : prev}
+          disabled={isIntro}
+          className="px-4 py-2 text-sm font-medium rounded-md border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-base)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+        >
+          {isReveal ? "Start over" : "Back"}
+        </button>
+
+        <span className="text-[11px] text-[var(--color-text-muted)] tabular-nums">
+          {step + 2} / {totalSteps}
+        </span>
+
+        {!isReveal && (
+          <button
+            onClick={next}
+            className="px-4 py-2 text-sm font-semibold rounded-md text-white transition-colors"
+            style={{
+              backgroundColor:
+                step === 3 ? "var(--color-positive)" : "var(--color-brand)",
+            }}
+          >
+            {isIntro
+              ? "Begin"
+              : step === 3
+                ? "See the result"
+                : "Next purchase"}
+          </button>
+        )}
+
+        {isReveal && <div className="w-[88px]" />}
       </div>
 
-      <p className="mt-3 text-[11px] text-[var(--color-text-muted)]">
-        Based on Ben Carlson&apos;s analysis at A Wealth of Common Sense. S&amp;P
-        500 total return data. Amounts and timing are approximate.
+      <p className="mt-4 text-[11px] text-[var(--color-text-muted)]">
+        Based on Ben Carlson&apos;s analysis at A Wealth of Common Sense.
+        S&amp;P 500 total return data. Amounts and timing are approximate.
       </p>
     </div>
   );
