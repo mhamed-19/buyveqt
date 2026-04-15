@@ -7,7 +7,6 @@ import type { VeqtQuote, DataSourceType } from "@/lib/types";
 import { NAV_LINKS, NAV_LINKS_SECONDARY } from "@/lib/constants";
 import DataFreshness from "@/components/ui/DataFreshness";
 import { useTheme } from "@/components/ThemeProvider";
-import { isMarketOpen } from "@/lib/data/market-hours";
 
 interface NavBarProps {
   quote: VeqtQuote | null;
@@ -19,21 +18,10 @@ interface NavBarProps {
 
 export default function NavBar({ quote, loading, isFallback, quoteSource, quoteFetchedAt }: NavBarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [marketOpen, setMarketOpen] = useState(false);
   const pathname = usePathname();
   const { theme, toggleTheme } = useTheme();
   const isPositive = (quote?.changePercent ?? 0) >= 0;
   const isCache = quoteSource === "cache";
-  const isLive = !isCache && !isFallback && quote !== null;
-
-  // Recompute market state on mount and every minute; avoids SSR/CSR
-  // mismatch and keeps the dot correct across a full trading day.
-  useEffect(() => {
-    const update = () => setMarketOpen(isMarketOpen());
-    update();
-    const interval = setInterval(update, 60_000);
-    return () => clearInterval(interval);
-  }, []);
 
   useEffect(() => {
     setMenuOpen(false);
@@ -114,17 +102,9 @@ export default function NavBar({ quote, loading, isFallback, quoteSource, quoteF
                   <span className="text-xs text-[var(--color-text-muted)] hidden sm:inline tracking-wide">
                     VEQT.TO
                   </span>
-                  {isCache ? (
-                    <span
-                      className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0"
-                      aria-label="Price served from cache"
-                    />
-                  ) : isLive && marketOpen ? (
-                    <span
-                      className="w-1.5 h-1.5 rounded-full bg-[var(--color-positive)] shrink-0 animate-pulse"
-                      aria-label="Live price, market open"
-                    />
-                  ) : null}
+                  {isCache && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+                  )}
                   <span className="font-semibold tabular-nums">
                     ${quote.price.toFixed(2)}
                   </span>
