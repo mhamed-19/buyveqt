@@ -13,10 +13,6 @@ import CalculatorsPreview from "@/components/CalculatorsPreview";
 import CommunityWidget from "@/components/CommunityWidget";
 import AnimateIn from "@/components/ui/AnimateIn";
 import DailyPulse from "@/components/home/DailyPulse";
-import WeeklyRecapCard from "@/components/home/WeeklyRecapCard";
-import DistributionCard from "@/components/home/DistributionCard";
-import CountdownToNextBrief from "@/components/home/CountdownToNextBrief";
-import NewsletterSignup from "@/components/NewsletterSignup";
 import type { WeeklyRecap } from "@/lib/weekly";
 import type { Distribution } from "@/data/distributions";
 
@@ -27,6 +23,7 @@ interface HomeClientProps {
   latestDistribution: Distribution | null;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export default function HomeClient({ latestRecap, latestDistribution }: HomeClientProps) {
   const { data, loading, period, setPeriod } = useVeqtData();
 
@@ -78,59 +75,30 @@ export default function HomeClient({ latestRecap, latestDistribution }: HomeClie
         {/* Editorial divider */}
         <div className="editorial-rule my-4" />
 
-        {/* 4. Weekly recap + countdown + latest distribution */}
-        <AnimateIn as="section" className="py-6 space-y-4">
-          <WeeklyRecapCard recap={latestRecap} />
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <CountdownToNextBrief />
-            <DistributionCard
-              distribution={latestDistribution}
-              currentPrice={data?.quote?.price ?? null}
-            />
-          </div>
-        </AnimateIn>
-
-        {/* 5. Calculators */}
+        {/* 4. Calculators */}
         <AnimateIn>
           <CalculatorsPreview />
         </AnimateIn>
 
-        {/* 6. What's inside VEQT */}
+        {/* 5. What's inside VEQT */}
         <AnimateIn>
           <InsideVeqtPreview />
         </AnimateIn>
 
-        {/* 7. Comparison table */}
+        {/* 6. Comparison table */}
         <AnimateIn>
           <ComparePreview />
         </AnimateIn>
 
-        {/* 8. Learn articles */}
+        {/* 7. Learn articles */}
         <AnimateIn>
           <LearnPreview />
-        </AnimateIn>
-
-        {/* 9. Newsletter CTA (prominent section variant) */}
-        <AnimateIn as="section" className="py-8">
-          <div className="card-editorial p-6 sm:p-8 text-center">
-            <p className="section-label">The Weekly Brief</p>
-            <h2 className="font-serif text-2xl sm:text-3xl mt-2 text-[var(--color-text-primary)]">
-              Get Sunday&apos;s recap in your inbox.
-            </h2>
-            <p className="mt-2 text-sm text-[var(--color-text-muted)] max-w-md mx-auto">
-              One email per week. Short, human-written, and specifically for
-              VEQT investors. No hot takes.
-            </p>
-            <div className="mt-5 max-w-md mx-auto">
-              <NewsletterSignup variant="section" />
-            </div>
-          </div>
         </AnimateIn>
 
         {/* Editorial divider */}
         <div className="editorial-rule my-4" />
 
-        {/* 10. Community */}
+        {/* 8. Community */}
         <AnimateIn>
           <CommunityWidget />
         </AnimateIn>
