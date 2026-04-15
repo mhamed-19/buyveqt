@@ -12,6 +12,7 @@ import LearnPreview from "@/components/LearnPreview";
 import CalculatorsPreview from "@/components/CalculatorsPreview";
 import CommunityWidget from "@/components/CommunityWidget";
 import AnimateIn from "@/components/ui/AnimateIn";
+import DailyPulse from "@/components/home/DailyPulse";
 import type { WeeklyRecap } from "@/lib/weekly";
 import type { Distribution } from "@/data/distributions";
 
@@ -46,7 +47,10 @@ export default function HomeClient({ latestRecap, latestDistribution }: HomeClie
           quoteFetchedAt={data?.quoteFetchedAt}
         />
 
-        {/* 2. Price Chart + Sidebar */}
+        {/* 2. Daily Pulse — regional attribution + hold line */}
+        <DailyPulse dailyChangePercent={data?.quote?.changePercent ?? null} />
+
+        {/* 3. Price Chart + Sidebar */}
         <AnimateIn as="section" className="py-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
             <div className="lg:col-span-2">
@@ -71,22 +75,22 @@ export default function HomeClient({ latestRecap, latestDistribution }: HomeClie
         {/* Editorial divider */}
         <div className="editorial-rule my-4" />
 
-        {/* 3. Calculators */}
+        {/* 4. Calculators */}
         <AnimateIn>
           <CalculatorsPreview />
         </AnimateIn>
 
-        {/* 4. What's inside VEQT */}
+        {/* 5. What's inside VEQT */}
         <AnimateIn>
           <InsideVeqtPreview />
         </AnimateIn>
 
-        {/* 5. Comparison table */}
+        {/* 6. Comparison table */}
         <AnimateIn>
           <ComparePreview />
         </AnimateIn>
 
-        {/* 6. Learn articles */}
+        {/* 7. Learn articles */}
         <AnimateIn>
           <LearnPreview />
         </AnimateIn>
@@ -94,7 +98,7 @@ export default function HomeClient({ latestRecap, latestDistribution }: HomeClie
         {/* Editorial divider */}
         <div className="editorial-rule my-4" />
 
-        {/* 7. Community */}
+        {/* 8. Community */}
         <AnimateIn>
           <CommunityWidget />
         </AnimateIn>
