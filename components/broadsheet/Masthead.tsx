@@ -1,0 +1,134 @@
+"use client";
+
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import type { VeqtQuote } from "@/lib/types";
+
+interface MastheadProps {
+  quote: VeqtQuote | null;
+  loading: boolean;
+}
+
+function formatPrice(n: number): string {
+  return n.toLocaleString("en-CA", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+function todayInToronto(): { weekday: string; full: string; issue: number } {
+  const now = new Date();
+  const fmt = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Toronto",
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+  const parts = Object.fromEntries(
+    fmt.formatToParts(now).map((p) => [p.type, p.value])
+  );
+  // "Issue" — days since VEQT inception (Jan 29, 2019) for a little persistence.
+  const inception = new Date("2019-01-29T00:00:00Z").getTime();
+  const issue = Math.floor((now.getTime() - inception) / 86_400_000);
+  return {
+    weekday: parts.weekday ?? "",
+    full: `${parts.weekday}, ${parts.month} ${parts.day}, ${parts.year}`,
+    issue,
+  };
+}
+
+export default function Masthead({ quote, loading }: MastheadProps) {
+  const [date, setDate] = useState(() => ({ full: "", weekday: "", issue: 0 }));
+
+  // Compute dates on the client so we don't mismatch SSR vs. locale.
+  useEffect(() => {
+    setDate(todayInToronto());
+    const interval = setInterval(() => setDate(todayInToronto()), 60_000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const isPositive = (quote?.changePercent ?? 0) >= 0;
+
+  return (
+    <header className="border-b border-[var(--ink)] pt-4 pb-2 relative z-10">
+      {/* Top strip — issue info, subscribe CTA */}
+      <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.2em] font-sans pb-3">
+        <span className="bs-stamp hidden sm:inline">
+          <span className="bs-live-dot" />
+          Live Wire
+        </span>
+        <span className="bs-label tabular-nums text-[var(--ink-soft)]">
+          {date.full || "\u00A0"}
+          {date.issue > 0 && (
+            <>
+              <span className="mx-2 opacity-40">·</span>
+              Vol. VII · No. {date.issue}
+            </>
+          )}
+        </span>
+        <Link
+          href="/community"
+          className="bs-label hover:text-[var(--stamp)] transition-colors hidden sm:inline"
+        >
+          The Community
+        </Link>
+      </div>
+
+      {/* The big masthead title */}
+      <div className="bs-rule-thick" />
+      <div className="py-4 sm:py-5 flex items-end justify-between gap-4">
+        <Link href="/" className="block">
+          <h1 className="bs-display text-5xl sm:text-7xl lg:text-[7rem] leading-[0.82] tracking-[-0.03em] text-[var(--ink)]">
+            The VEQT Daily
+          </h1>
+          <p className="bs-caption mt-2 hidden sm:block">
+            A Canadian broadsheet for the lazy investor &mdash; priced, read, held.
+          </p>
+        </Link>
+
+        {/* Ticker block — large price display to the right */}
+        <div className="hidden md:block text-right shrink-0">
+          <p className="bs-label">VEQT.TO &middot; Last close</p>
+          <p className="bs-numerals text-3xl lg:text-4xl font-medium mt-1">
+            {loading || !quote ? "—" : `$${formatPrice(quote.price)}`}
+          </p>
+          {!loading && quote && (
+            <p
+              className="bs-numerals text-sm mt-0.5"
+              style={{
+                color: isPositive ? "var(--print-green)" : "var(--print-red)",
+              }}
+            >
+              {isPositive ? "▲" : "▼"} {isPositive ? "+" : ""}
+              {quote.changePercent.toFixed(2)}% &nbsp;({isPositive ? "+" : ""}
+              ${Math.abs(quote.change).toFixed(2)})
+            </p>
+          )}
+        </div>
+      </div>
+
+      <div className="bs-rule-thin" />
+
+      {/* Section shortcuts — a newspaper's department row */}
+      <nav className="flex items-center gap-5 sm:gap-8 overflow-x-auto pt-2 pb-1 bs-label hide-scrollbar">
+        {[
+          { href: "/invest", label: "The Calculator" },
+          { href: "/compare", label: "The Comparison" },
+          { href: "/learn", label: "The Archive" },
+          { href: "/inside-veqt", label: "The Portfolio" },
+          { href: "/distributions", label: "Distributions" },
+          { href: "/community", label: "Letters" },
+        ].map((l) => (
+          <Link
+            key={l.href}
+            href={l.href}
+            className="whitespace-nowrap hover:text-[var(--stamp)] transition-colors"
+          >
+            {l.label}
+          </Link>
+        ))}
+      </nav>
+    </header>
+  );
+}
