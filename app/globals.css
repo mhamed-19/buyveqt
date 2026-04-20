@@ -25,6 +25,17 @@
 
   --font-sans: var(--font-outfit, "Outfit"), ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-serif: var(--font-newsreader, "Newsreader"), "Georgia", "Times New Roman", serif;
+  --font-display: var(--font-fraunces, "Fraunces"), "Playfair Display", "Georgia", serif;
+
+  /* Broadsheet ink + paper palette */
+  --ink: #0f0d0a;
+  --ink-soft: #2a2520;
+  --paper: #f6efdc;
+  --paper-deep: #ede3ca;
+  --rule: #b8a66e;
+  --stamp: #8a1c1c;
+  --print-green: #1d5431;
+  --print-red: #8a1c1c;
 }
 
 /* ── Light mode — explicit overrides for reliability ──────── */
@@ -496,4 +507,256 @@ body::after {
 [data-theme="dark"] .callout {
   --callout-bg: var(--callout-bg-dark) !important;
   background-color: var(--callout-bg-dark) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   THE VEQT DAILY — Broadsheet typography & layout
+   Scoped to [data-broadsheet] on the home wrapper so nothing
+   leaks into /learn, /compare, /calculators, etc.
+══════════════════════════════════════════════════════════════ */
+
+[data-broadsheet] {
+  /* Override palette toward paper + ink for the home page only */
+  --color-base: var(--paper);
+  --color-card: var(--paper);
+  --color-text-primary: var(--ink);
+  --color-text-secondary: var(--ink-soft);
+  --color-border: color-mix(in oklab, var(--rule) 55%, transparent);
+
+  background-color: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-serif);
+}
+
+[data-theme="dark"] [data-broadsheet] {
+  --ink: #ebe2cc;
+  --ink-soft: #a89b82;
+  --paper: #0a0a0d;
+  --paper-deep: #141318;
+  --rule: #735f3c;
+  --stamp: #e0665e;
+  --print-green: #5ec989;
+  --print-red: #e0665e;
+
+  --color-base: var(--paper);
+  --color-card: var(--paper);
+  --color-text-primary: var(--ink);
+  --color-text-secondary: var(--ink-soft);
+  --color-border: color-mix(in oklab, var(--rule) 45%, transparent);
+
+  background-color: var(--paper);
+}
+
+[data-broadsheet] .bs-display {
+  font-family: var(--font-display);
+  font-weight: 500;
+  letter-spacing: -0.028em;
+  line-height: 0.92;
+  font-feature-settings: "ss01", "dlig";
+}
+
+[data-broadsheet] .bs-display-italic {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 500;
+  letter-spacing: -0.022em;
+  line-height: 0.95;
+  font-feature-settings: "ss01";
+}
+
+[data-broadsheet] .bs-body {
+  font-family: var(--font-serif);
+  font-size: 1.0625rem;
+  line-height: 1.55;
+  color: var(--ink);
+}
+
+[data-broadsheet] .bs-lede {
+  /* Gives the float room to clear; keeps subsequent text flowing cleanly. */
+  overflow: hidden;
+}
+
+[data-broadsheet] .bs-lede::first-letter {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 4.1em;
+  line-height: 0.86;
+  float: left;
+  padding: 0.08em 0.14em 0 0;
+  margin-top: 0.04em;
+  color: var(--stamp);
+  font-feature-settings: "ss01";
+  shape-outside: margin-box;
+}
+
+@media (max-width: 640px) {
+  [data-broadsheet] .bs-lede::first-letter {
+    font-size: 3.4em;
+    padding: 0.06em 0.12em 0 0;
+  }
+}
+
+[data-broadsheet] .bs-label {
+  font-family: var(--font-sans);
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+[data-broadsheet] .bs-stamp {
+  font-family: var(--font-sans);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--stamp);
+}
+
+[data-broadsheet] .bs-caption {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 0.8125rem;
+  color: var(--ink-soft);
+  line-height: 1.45;
+}
+
+[data-broadsheet] .bs-numerals {
+  font-family: var(--font-serif);
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: "tnum", "lnum";
+}
+
+/* Rules: tighter, darker, more print-like than editorial-rule */
+[data-broadsheet] .bs-rule-thick {
+  border-top: 3px solid var(--ink);
+  border-bottom: 1px solid var(--ink);
+  height: 6px;
+}
+
+[data-broadsheet] .bs-rule-thin {
+  border-top: 1px solid var(--ink);
+  height: 0;
+}
+
+[data-broadsheet] .bs-rule-double {
+  border-top: 1px solid var(--ink);
+  border-bottom: 1px solid var(--ink);
+  height: 4px;
+}
+
+[data-broadsheet] .bs-rule-ornate {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  color: var(--rule);
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  line-height: 1;
+  margin: 2rem 0;
+}
+
+[data-broadsheet] .bs-rule-ornate::before,
+[data-broadsheet] .bs-rule-ornate::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--ink);
+  opacity: 0.6;
+}
+
+/* Drop-capped column list (for "Letters") */
+[data-broadsheet] .bs-column-columns {
+  column-count: 2;
+  column-gap: 2rem;
+  column-rule: 1px solid var(--color-border);
+}
+
+@media (max-width: 768px) {
+  [data-broadsheet] .bs-column-columns {
+    column-count: 1;
+  }
+}
+
+/* Engraving chart treatment — hairline, monochrome ink */
+[data-broadsheet] .bs-chart-frame {
+  position: relative;
+  padding: 1.25rem 1rem 1rem;
+  border: 1px solid var(--ink);
+  background: var(--paper);
+}
+
+[data-broadsheet] .bs-chart-frame::before {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border: 1px solid var(--ink);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* Link treatment — underline like a newspaper */
+[data-broadsheet] .bs-link {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-thickness: 1px;
+  transition: color 0.2s;
+}
+
+[data-broadsheet] .bs-link:hover {
+  color: var(--stamp);
+}
+
+/* Enter animations — staggered, gentle */
+@keyframes broadsheet-fade {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+[data-broadsheet] .bs-enter {
+  animation: broadsheet-fade 0.7s ease-out both;
+}
+
+/* The live pulse stamp next to the date */
+@keyframes ink-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+[data-broadsheet] .bs-live-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--stamp);
+  animation: ink-pulse 2.4s ease-in-out infinite;
+  vertical-align: middle;
+  margin-right: 0.45em;
+}
+
+/* Subtle paper texture — darker than the base film grain, only on broadsheet */
+[data-broadsheet]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.06;
+  z-index: 0;
+  background-image:
+    repeating-linear-gradient(
+      90deg,
+      transparent 0,
+      transparent 2px,
+      rgba(0,0,0,0.12) 2px,
+      rgba(0,0,0,0.12) 3px
+    );
+  mix-blend-mode: multiply;
+}
+
+[data-theme="dark"] [data-broadsheet]::before {
+  mix-blend-mode: screen;
+  opacity: 0.03;
 }
