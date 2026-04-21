@@ -56,8 +56,8 @@ export default function Home() {
   const { payload: regionsPayload, loading: regionsLoading } = useRegions();
   const regions = regionsPayload?.regions ?? [];
 
-  // Dynamic editorial eyebrow — composes magnitude × driving sleeve.
-  const leadEyebrow = useMemo(
+  // Dynamic editorial deck + headline — composes magnitude × driving sleeve.
+  const leadCopy = useMemo(
     () => computeLeadHeadline(quote?.changePercent, regions),
     [quote?.changePercent, regions]
   );
@@ -99,20 +99,14 @@ export default function Home() {
         {/* ─────────────────────── THE LEAD ─────────────────────── */}
         <section className="py-10 sm:py-14 lg:py-20 bs-enter">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
-            {/* Column A — giant italic headline */}
+            {/* Column A — dynamic editorial lead */}
             <div className="lg:col-span-8">
-              <p className="bs-stamp mb-4">{leadEyebrow}</p>
-              <h2 className="bs-display-italic text-[3.25rem] sm:text-[5rem] lg:text-[7.5rem] text-[var(--ink)]">
-                {isPositive ? "Another green day" : "Another red day"}
-                <br />
-                <span className="not-italic bs-display font-normal">
-                  for the lazy
-                </span>
-                <br />
-                <em className="text-[var(--stamp)]">investor.</em>
+              <p className="bs-stamp mb-3 sm:mb-4">{leadCopy.deck}</p>
+              <h2 className="bs-display-italic text-[2rem] sm:text-[2.75rem] lg:text-[4rem] leading-[1.02] text-[var(--ink)] max-w-[18ch]">
+                {leadCopy.headline}
               </h2>
 
-              <p className="bs-caption mt-6 max-w-lg">
+              <p className="bs-caption mt-5 sm:mt-6 max-w-lg">
                 &mdash; VEQT closed at{" "}
                 {loading || !quote ? "—" : `$${quote.price.toFixed(2)}`},{" "}
                 {!loading && quote && (
