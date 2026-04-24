@@ -9,6 +9,7 @@ import RegionCards from "@/components/broadsheet/RegionCards";
 import Letters from "@/components/broadsheet/Letters";
 import Colophon from "@/components/broadsheet/Colophon";
 import SeverityMeter from "@/components/broadsheet/SeverityMeter";
+import HeroSparkline from "@/components/broadsheet/HeroSparkline";
 import { useRegions } from "@/lib/useRegions";
 import { computeLeadHeadline } from "@/lib/lead-headline";
 import { computeSeverity } from "@/lib/severity";
@@ -27,16 +28,7 @@ export default function Home() {
 
   const [investment, setInvestment] = useState(10_000);
   const historical = data?.historical ?? [];
-  const inceptionPrice = historical[0]?.close ?? 0;
   const currentPrice = quote?.price ?? 0;
-  const calcResult =
-    inceptionPrice > 0 && currentPrice > 0
-      ? (investment / inceptionPrice) * currentPrice
-      : null;
-  const calcReturn =
-    calcResult !== null && investment > 0
-      ? ((calcResult - investment) / investment) * 100
-      : null;
 
   // Live sleeve data — shared between the lead headline and RegionCards.
   const { payload: regionsPayload, loading: regionsLoading } = useRegions();
@@ -82,6 +74,20 @@ export default function Home() {
     [fullHistory, historical, quote?.changePercent]
   );
 
+  // Inception return — prefer the full since-inception fetch so the "If you'd
+  // bought $10k at launch" math is anchored to actual Jan 2019 pricing rather
+  // than the 1Y chart window's opening bar.
+  const inceptionSeries = fullHistory ?? historical;
+  const inceptionPrice = inceptionSeries[0]?.close ?? 0;
+  const calcResult =
+    inceptionPrice > 0 && currentPrice > 0
+      ? (investment / inceptionPrice) * currentPrice
+      : null;
+  const calcReturn =
+    calcResult !== null && investment > 0
+      ? ((calcResult - investment) / investment) * 100
+      : null;
+
   return (
     <div
       data-broadsheet
@@ -94,27 +100,35 @@ export default function Home() {
         {/* ─────────────────────── THE LEAD ─────────────────────── */}
         <section className="py-7 sm:py-10 lg:py-12 bs-enter">
           <div className="max-w-[52rem]">
-            {/* Price — the anchor */}
-            <div className="flex items-baseline gap-x-4 gap-y-2 flex-wrap">
-              <p className="bs-display bs-numerals text-[3.25rem] sm:text-[4.5rem] lg:text-[5.5rem] leading-[0.88] text-[var(--ink)]">
-                {loading || !quote ? "—" : `$${quote.price.toFixed(2)}`}
-              </p>
-              {!loading && quote && (
-                <p
-                  className="bs-numerals text-lg sm:text-xl lg:text-2xl"
-                  style={{
-                    color: isPositive
-                      ? "var(--print-green)"
-                      : "var(--print-red)",
-                  }}
-                >
-                  {isPositive ? "▲" : "▼"} {isPositive ? "+" : "−"}$
-                  {Math.abs(quote.change).toFixed(2)}
-                  <span className="opacity-70 ml-1.5">
-                    ({isPositive ? "+" : ""}
-                    {quote.changePercent.toFixed(2)}%)
-                  </span>
+            {/* Price block + since-inception arc. Price anchors the left;
+                the arc sits to its right on desktop and drops below it on
+                narrower screens so neither element has to compress. */}
+            <div className="flex items-end justify-between gap-x-8 gap-y-5 flex-wrap">
+              <div className="flex items-baseline gap-x-4 gap-y-2 flex-wrap">
+                <p className="bs-display bs-numerals text-[3.25rem] sm:text-[4.5rem] lg:text-[5.5rem] leading-[0.88] text-[var(--ink)]">
+                  {loading || !quote ? "—" : `$${quote.price.toFixed(2)}`}
                 </p>
+                {!loading && quote && (
+                  <p
+                    className="bs-numerals text-lg sm:text-xl lg:text-2xl"
+                    style={{
+                      color: isPositive
+                        ? "var(--print-green)"
+                        : "var(--print-red)",
+                    }}
+                  >
+                    {isPositive ? "▲" : "▼"} {isPositive ? "+" : "−"}$
+                    {Math.abs(quote.change).toFixed(2)}
+                    <span className="opacity-70 ml-1.5">
+                      ({isPositive ? "+" : ""}
+                      {quote.changePercent.toFixed(2)}%)
+                    </span>
+                  </p>
+                )}
+              </div>
+
+              {fullHistory && fullHistory.length >= 2 && (
+                <HeroSparkline points={fullHistory} />
               )}
             </div>
 
