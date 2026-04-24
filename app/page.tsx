@@ -1,23 +1,17 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useVeqtData } from "@/lib/useVeqtData";
-import {
-  COMPARISON_DATA,
-  LEARN_ARTICLES,
-  STATIC_DATA,
-} from "@/lib/constants";
-import {
-  VEQT_DISTRIBUTIONS,
-  getTrailing12MonthDistributions,
-} from "@/data/distributions";
+import { COMPARISON_DATA, LEARN_ARTICLES } from "@/lib/constants";
 import Masthead from "@/components/broadsheet/Masthead";
 import RegionCards from "@/components/broadsheet/RegionCards";
 import Letters from "@/components/broadsheet/Letters";
 import Colophon from "@/components/broadsheet/Colophon";
+import SeverityMeter from "@/components/broadsheet/SeverityMeter";
 import { useRegions } from "@/lib/useRegions";
 import { computeLeadHeadline } from "@/lib/lead-headline";
+import { computeSeverity } from "@/lib/severity";
 
 function formatCAD(n: number, digits = 0): string {
   return n.toLocaleString("en-CA", {
@@ -44,14 +38,6 @@ export default function Home() {
       ? ((calcResult - investment) / investment) * 100
       : null;
 
-  const trailingYield = useMemo(() => {
-    if (!quote || quote.price <= 0) return null;
-    const ttm = getTrailing12MonthDistributions();
-    return (ttm / quote.price) * 100;
-  }, [quote]);
-
-  const latestDist = VEQT_DISTRIBUTIONS.distributions.find((d) => !d.estimated);
-
   // Live sleeve data — shared between the lead headline and RegionCards.
   const { payload: regionsPayload, loading: regionsLoading } = useRegions();
   const regions = regionsPayload?.regions ?? [];
@@ -62,30 +48,39 @@ export default function Home() {
     [quote?.changePercent, regions]
   );
 
-  // 52-week range position, clamped so the dot is always fully visible.
-  const rangePct =
-    quote && quote.fiftyTwoWeekHigh > quote.fiftyTwoWeekLow
-      ? ((quote.price - quote.fiftyTwoWeekLow) /
-          (quote.fiftyTwoWeekHigh - quote.fiftyTwoWeekLow)) *
-        100
-      : null;
-  const rangeDotPct = rangePct !== null ? Math.min(97, Math.max(3, rangePct)) : null;
+  // Severity reading — how unusual today's move is vs. VEQT's own history.
+  // Fire a parallel fetch for ALL history (since Jan 2019) so the meter's
+  // distribution is anchored to since-inception rather than the chart's 1Y
+  // default window. Falls back to whatever the chart has if the ALL call fails.
+  const [fullHistory, setFullHistory] = useState<
+    { date: string; close: number }[] | null
+  >(null);
 
-  // Editorial framing of where we are in the range.
-  const rangeCaption = (() => {
-    if (rangePct === null) return "";
-    if (!quote) return "";
-    const highDist = quote.fiftyTwoWeekHigh - quote.price;
-    const lowDist = quote.price - quote.fiftyTwoWeekLow;
-    if (rangePct >= 97) return "at the 52-week high";
-    if (rangePct >= 90)
-      return `$${highDist.toFixed(2)} from the 52-week high`;
-    if (rangePct >= 75) return "pressing the highs";
-    if (rangePct <= 3) return "at the 52-week low";
-    if (rangePct <= 10) return `$${lowDist.toFixed(2)} from the 52-week low`;
-    if (rangePct <= 25) return "pressing the lows";
-    return `${rangePct.toFixed(0)}% of range`;
-  })();
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/veqt?period=ALL");
+        if (!res.ok) return;
+        const json = (await res.json()) as {
+          historical?: { date: string; close: number }[];
+        };
+        if (!cancelled && json.historical?.length) {
+          setFullHistory(json.historical);
+        }
+      } catch {
+        // Silent — we'll fall back to the 1Y window already in `historical`.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const severity = useMemo(
+    () => computeSeverity(fullHistory ?? historical, quote?.changePercent),
+    [fullHistory, historical, quote?.changePercent]
+  );
 
   return (
     <div
@@ -130,77 +125,8 @@ export default function Home() {
               {leadCopy.headline}
             </h2>
 
-            {/* ── Supporting data strip ── */}
-            <div className="mt-7 sm:mt-9 pt-5 border-t border-[var(--ink)] grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-7 sm:gap-10">
-              {/* 52-week range */}
-              {quote && rangePct !== null && rangeDotPct !== null && (
-                <div>
-                  <p className="bs-label mb-2">52-week range</p>
-                  <div className="relative h-px bg-[var(--ink)]">
-                    <span
-                      aria-hidden
-                      className="absolute w-2.5 h-2.5 rounded-full bg-[var(--stamp)] -translate-y-1/2 -translate-x-1/2 top-1/2"
-                      style={{ left: `${rangeDotPct}%` }}
-                    />
-                  </div>
-                  <div className="flex justify-between mt-2 bs-numerals text-sm">
-                    <span>${quote.fiftyTwoWeekLow.toFixed(2)}</span>
-                    <span>${quote.fiftyTwoWeekHigh.toFixed(2)}</span>
-                  </div>
-                  <p
-                    className="bs-caption italic text-[12px] mt-1"
-                    style={{ color: "var(--ink-soft)" }}
-                  >
-                    {rangeCaption}
-                  </p>
-                </div>
-              )}
-
-              {/* Key stats — three inline facts */}
-              <div className="grid grid-cols-3 gap-4 items-start">
-                <div>
-                  <p className="bs-label">MER</p>
-                  <p className="bs-numerals text-[1rem] mt-1">
-                    ~{STATIC_DATA.mer.toFixed(2)}%
-                  </p>
-                </div>
-                <div>
-                  <p className="bs-label">AUM</p>
-                  <p className="bs-numerals text-[1rem] mt-1">
-                    {STATIC_DATA.aum}
-                  </p>
-                </div>
-                <div>
-                  <p className="bs-label">Yield</p>
-                  <p className="bs-numerals text-[1rem] mt-1">
-                    {trailingYield !== null
-                      ? `${trailingYield.toFixed(2)}%`
-                      : "—"}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {latestDist && (
-              <p
-                className="bs-caption italic mt-4 text-[12px]"
-                style={{ color: "var(--ink-soft)" }}
-              >
-                Last distribution ${latestDist.amount.toFixed(4)} &middot;
-                ex-div{" "}
-                {new Date(
-                  latestDist.exDate + "T00:00:00"
-                ).toLocaleDateString("en-CA", {
-                  month: "short",
-                  day: "numeric",
-                  year: "numeric",
-                })}{" "}
-                &middot;{" "}
-                <Link href="/distributions" className="bs-link">
-                  all distributions
-                </Link>
-              </p>
-            )}
+            {/* ── How unusual is today? — the behavioral anchor ── */}
+            <SeverityMeter reading={severity} loading={loading} />
           </div>
         </section>
 
