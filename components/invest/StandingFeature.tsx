@@ -41,6 +41,10 @@ export default function StandingFeature({ history }: StandingFeatureProps) {
   const todayValue = units * last.adjustedClose;
   const totalReturnPct =
     ((todayValue - HYPOTHETICAL_AMOUNT) / HYPOTHETICAL_AMOUNT) * 100;
+  const years =
+    (new Date(last.date).getTime() - new Date(first.date).getTime()) /
+    (365.25 * 24 * 60 * 60 * 1000);
+  const cagr = years > 0 ? Math.pow(todayValue / HYPOTHETICAL_AMOUNT, 1 / years) - 1 : null;
 
   return (
     <section
@@ -54,28 +58,10 @@ export default function StandingFeature({ history }: StandingFeatureProps) {
         className="bs-display text-[1.5rem] sm:text-[2rem] mb-5"
         style={{ color: "var(--ink)" }}
       >
-        <em className="bs-display-italic">$10,000 at inception</em>, today
+        <em className="bs-display-italic">What $10,000 became</em>
       </h2>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8">
-        <div>
-          <p className="bs-label mb-2" style={{ color: "var(--ink-soft)" }}>
-            Invested {fmtMonthYear(first.date)}
-          </p>
-          <p
-            className="bs-numerals tabular-nums text-[2rem] sm:text-[2.5rem] leading-none"
-            style={{ color: "var(--ink)" }}
-          >
-            {fmtCAD(HYPOTHETICAL_AMOUNT)}
-          </p>
-          <p
-            className="bs-caption italic mt-2 text-[12.5px]"
-            style={{ color: "var(--ink-soft)" }}
-          >
-            Hypothetical lump sum on the first trading day.
-          </p>
-        </div>
-
         <div>
           <p className="bs-label mb-2" style={{ color: "var(--ink-soft)" }}>
             Today&apos;s value
@@ -90,7 +76,7 @@ export default function StandingFeature({ history }: StandingFeatureProps) {
             className="bs-caption italic mt-2 text-[12.5px]"
             style={{ color: "var(--ink-soft)" }}
           >
-            Reinvested distributions, no fees applied.
+            From {fmtMonthYear(first.date)}, reinvested, no fees.
           </p>
         </div>
 
@@ -111,6 +97,31 @@ export default function StandingFeature({ history }: StandingFeatureProps) {
             style={{ color: "var(--ink-soft)" }}
           >
             Past performance is not a forecast.
+          </p>
+        </div>
+
+        <div>
+          <p className="bs-label mb-2" style={{ color: "var(--ink-soft)" }}>
+            Per year (CAGR)
+          </p>
+          <p
+            className="bs-numerals tabular-nums text-[2rem] sm:text-[2.5rem] leading-none"
+            style={{ color: "var(--ink)" }}
+          >
+            {cagr !== null ? (
+              <>
+                +{(cagr * 100).toFixed(1)}
+                <span className="text-[1.5rem] align-top ml-0.5">%</span>
+              </>
+            ) : (
+              "—"
+            )}
+          </p>
+          <p
+            className="bs-caption italic mt-2 text-[12.5px]"
+            style={{ color: "var(--ink-soft)" }}
+          >
+            Compound annual growth rate since inception.
           </p>
         </div>
       </div>

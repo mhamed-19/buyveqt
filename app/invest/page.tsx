@@ -175,12 +175,10 @@ export default async function InvestPage() {
       <section className="pt-8 sm:pt-10 pb-2 bs-enter">
         <p className="bs-stamp mb-3">The Reckoner</p>
         <h1
-          className="bs-display text-[2.25rem] sm:text-[3.25rem] lg:text-[4.25rem] leading-[0.98]"
+          className="bs-display text-[1.875rem] sm:text-[2.25rem] leading-[1.1]"
           style={{ color: "var(--ink)" }}
         >
-          Run the figures,
-          <br />
-          <em className="bs-display-italic">slowly.</em>
+          Run the figures, <em className="bs-display-italic">slowly.</em>
         </h1>
         <p
           className="bs-body italic mt-5 max-w-[58ch] text-[1.0625rem]"
