@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { FUNDS, FUND_DATA_LAST_UPDATED } from "@/data/funds";
 import type { DataSourceType } from "@/lib/types";
+import type { RiskMetrics } from "@/lib/risk-metrics";
 import DataFreshness from "@/components/ui/DataFreshness";
 import StaleBanner from "@/components/ui/StaleBanner";
 
@@ -12,6 +13,7 @@ interface FundQuote {
   dividendYield: number | null;
   ytdReturn: number | null;
   oneYearReturn: number | null;
+  risk: RiskMetrics | null;
   source?: DataSourceType;
   error: boolean;
 }
@@ -108,6 +110,42 @@ export default function StatsTable({ selectedFunds }: StatsTableProps) {
           : "\u2014",
       highlight: "highest",
       getNumericValue: (_, q) => q?.oneYearReturn ?? null,
+    },
+    {
+      // Worst peak-to-trough drop in the fund's full history.
+      // "Highest" wins — the smallest absolute drop is the easiest
+      // hold. Always shown as a negative number with explicit sign so
+      // the sign column reads consistently.
+      label: "Max Drawdown",
+      getValue: (_, q) =>
+        q?.risk
+          ? `${q.risk.maxDrawdownPct.toFixed(1)}%`
+          : "\u2014",
+      highlight: "highest", // less negative = better
+      getNumericValue: (_, q) => q?.risk?.maxDrawdownPct ?? null,
+    },
+    {
+      // Calendar days from trough to a new all-time high.
+      // "Lowest" wins — fastest recovery is the least painful hold.
+      // If the fund hasn't recovered, we show "still recovering" with
+      // the current gap, and exclude it from "best" eligibility (we
+      // ranked by recoveryDays, which is null when not recovered).
+      label: "Recovery Time",
+      getValue: (_, q) => {
+        if (!q?.risk) return "\u2014";
+        if (q.risk.stillRecovering) {
+          const cur = q.risk.currentDrawdownPct;
+          return `still recovering (${cur.toFixed(1)}%)`;
+        }
+        const days = q.risk.recoveryDays ?? 0;
+        if (days < 60) return `${days}d`;
+        const months = days / 30.44;
+        if (months < 24) return `${months.toFixed(1)}mo`;
+        const years = days / 365.25;
+        return `${years.toFixed(1)}y`;
+      },
+      highlight: "lowest", // fewer days = better
+      getNumericValue: (_, q) => q?.risk?.recoveryDays ?? null,
     },
     {
       label: "Inception",
@@ -296,7 +334,9 @@ export default function StatsTable({ selectedFunds }: StatsTableProps) {
           className="bs-caption italic text-[11px]"
           style={{ color: "var(--ink-soft)" }}
         >
-          Vermilion underscore marks the leader on each row.
+          Vermilion underscore marks the leader on each row. Drawdown and
+          recovery are measured over each fund&apos;s full available
+          history — younger funds have lived through fewer storms.
         </p>
       </div>
 
