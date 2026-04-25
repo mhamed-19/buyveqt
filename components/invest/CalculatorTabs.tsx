@@ -7,6 +7,7 @@ import DCACalculator from "@/components/calculators/DCACalculator";
 import DividendCalculator from "@/components/calculators/DividendCalculator";
 import TFSARRSPCalculator from "@/components/calculators/TFSARRSPCalculator";
 import FIRECalculator from "@/components/calculators/FIRECalculator";
+import CalculatorFrame from "./CalculatorFrame";
 import type { HistoricalData } from "@/lib/data/types";
 import type { VolatilityStats } from "@/lib/data/volatility";
 import { inferTab } from "@/lib/share-params";
@@ -14,59 +15,43 @@ import { inferTab } from "@/lib/share-params";
 const TABS = [
   {
     id: "historical",
-    label: "If You Invested",
-    shortLabel: "Historical",
-    description: "See what a past VEQT investment would be worth today",
-    icon: (
-      <svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor">
-        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-13a.75.75 0 00-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 000-1.5h-3.25V5z" clipRule="evenodd" />
-      </svg>
-    ),
+    label: "The Lookback",
+    shortLabel: "Lookback",
+    frameTitle: "What it would have been",
+    frameSubhead:
+      "Pick a date in the past. We'll tell you what your money would be worth today.",
   },
   {
     id: "dca",
-    label: "DCA Planner",
-    shortLabel: "DCA",
-    description: "Plan regular monthly contributions and see projected growth",
-    icon: (
-      <svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor">
-        <path d="M12.577 4.878a.75.75 0 01.919-.53l4.78 1.281a.75.75 0 01.531.919l-1.281 4.78a.75.75 0 01-1.449-.387l.81-3.022a19.407 19.407 0 00-5.594 5.203.75.75 0 01-1.139.093L7 10.06l-4.72 4.72a.75.75 0 01-1.06-1.06l5.25-5.25a.75.75 0 011.06 0l3.074 3.073a20.923 20.923 0 015.545-4.931l-3.042.815a.75.75 0 01-.53-.919z" />
-      </svg>
-    ),
+    label: "The Drip",
+    shortLabel: "Drip",
+    frameTitle: "What steady contributions become",
+    frameSubhead:
+      "Regular contributions, projected forward. Adjustable for what the market actually does.",
   },
   {
     id: "dividends",
-    label: "Dividend Income",
-    shortLabel: "Dividends",
-    description: "Estimate annual distribution income from your portfolio",
-    icon: (
-      <svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor">
-        <path d="M10.75 10.818v2.614A3.13 3.13 0 0011.888 13c.482-.315.612-.648.612-.875 0-.227-.13-.56-.612-.875a3.13 3.13 0 00-1.138-.432zM8.33 8.62c.053.055.115.11.184.164.208.16.46.284.736.363V6.603c-.481.085-.91.296-1.18.562-.268.265-.383.553-.383.82 0 .266.115.555.383.82a2.42 2.42 0 00.26.216z" />
-        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-6a.75.75 0 01.75.75v.316a3.78 3.78 0 011.653.713c.426.33.744.74.925 1.2a.75.75 0 01-1.395.55 1.97 1.97 0 00-.479-.603A2.3 2.3 0 0010.75 6.5v2.786c.862.212 1.625.6 2.183 1.163C13.5 11.016 13.75 11.65 13.75 12.375c0 .726-.25 1.358-.817 1.926-.558.563-1.321.951-2.183 1.163v.286a.75.75 0 01-1.5 0v-.286c-.862-.212-1.625-.6-2.183-1.163C6.5 13.734 6.25 13.1 6.25 12.375a.75.75 0 011.5 0c0 .267.115.556.383.82.26.259.657.464 1.117.558V10.5a.75.75 0 01-.75-.75V8.375c0-.726.25-1.358.817-1.926.558-.563 1.321-.951 2.183-1.163V5A.75.75 0 0110 4z" clipRule="evenodd" />
-      </svg>
-    ),
+    label: "The Yield",
+    shortLabel: "Yield",
+    frameTitle: "What your stake pays",
+    frameSubhead:
+      "Annual distribution income from a VEQT position, projected at today's yield.",
   },
   {
     id: "tfsa-rrsp",
-    label: "TFSA / RRSP",
-    shortLabel: "TFSA",
-    description: "Project how your registered account could grow over time",
-    icon: (
-      <svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor">
-        <path fillRule="evenodd" d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z" clipRule="evenodd" />
-      </svg>
-    ),
+    label: "The Shelter",
+    shortLabel: "Shelter",
+    frameTitle: "What grows tax-free",
+    frameSubhead:
+      "Project a TFSA or RRSP balance over the long horizon, with VEQT-typical returns.",
   },
   {
     id: "fire",
-    label: "FIRE Calculator",
-    shortLabel: "FIRE",
-    description: "Find your Financial Independence number and when you could reach it",
-    icon: (
-      <svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor">
-        <path fillRule="evenodd" d="M13.5 4.938a7 7 0 11-9.006 1.737c.202-.257.59-.218.793.039.278.352.594.672.943.954.332.269.786-.049.773-.476a5.977 5.977 0 01.572-2.759 6.026 6.026 0 012.486-2.665c.247-.14.55-.016.677.238A6.967 6.967 0 0013.5 4.938zM14 12a4.002 4.002 0 01-3.178 3.919c-.209.049-.413-.106-.413-.315 0-.576-.262-1.115-.675-1.5.275-.09.547-.203.808-.344a.946.946 0 00.35-1.285A5.977 5.977 0 0110 8.5c-.595 0-1.17.083-1.716.24a5.99 5.99 0 00-2.284 1.349 4 4 0 108 1.911z" clipRule="evenodd" />
-      </svg>
-    ),
+    label: "The Exit",
+    shortLabel: "Exit",
+    frameTitle: "When the fund buys you out",
+    frameSubhead:
+      "Your financial independence number, and how many years of saving stand between you and it.",
   },
 ] as const;
 
@@ -104,10 +89,14 @@ function CalculatorTabsInner({ history, volatilityStats }: CalculatorTabsProps) 
 
   return (
     <div>
-      {/* Tab bar — horizontal scroll on mobile, 5-col grid on desktop */}
-      <div className="card-editorial p-1.5 mb-6">
+      {/* Tab bar — broadsheet selector, scrolls horizontally on mobile */}
+      <div
+        className="border-b border-[var(--ink)] mb-2"
+        role="tablist"
+        aria-label="Reckoner sections"
+      >
         <div
-          className="flex sm:grid sm:grid-cols-5 gap-1.5 overflow-x-auto hide-scrollbar snap-x snap-mandatory"
+          className="flex sm:grid sm:grid-cols-5 gap-0 overflow-x-auto hide-scrollbar snap-x snap-mandatory"
           style={{ WebkitOverflowScrolling: "touch" }}
         >
           {TABS.map((tab) => {
@@ -115,41 +104,51 @@ function CalculatorTabsInner({ history, volatilityStats }: CalculatorTabsProps) 
             return (
               <button
                 key={tab.id}
+                role="tab"
+                aria-selected={isActive}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-all cursor-pointer shrink-0 snap-start min-h-[44px] ${
-                  isActive
-                    ? "bg-[var(--color-brand)] text-white shadow-sm"
-                    : "text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-card-hover)]"
-                }`}
+                className={`
+                  flex items-center justify-center sm:justify-start text-left
+                  px-4 py-3 sm:px-5 sm:py-4 cursor-pointer shrink-0 snap-start min-h-[52px]
+                  border-t-2 transition-colors
+                  ${isActive
+                    ? "border-[var(--stamp)]"
+                    : "border-transparent hover:bg-[var(--color-card-hover)]"}
+                `}
+                style={{
+                  backgroundColor: isActive ? "var(--paper)" : "transparent",
+                }}
               >
-                <span className={`shrink-0 ${isActive ? "text-white/80" : "text-[var(--color-accent)]"}`}>
-                  {tab.icon}
+                <span
+                  className="bs-display-italic text-[15px] sm:text-[17px] leading-none whitespace-nowrap"
+                  style={{
+                    color: isActive ? "var(--ink)" : "var(--ink-soft)",
+                  }}
+                >
+                  <span className="sm:hidden">{tab.shortLabel}</span>
+                  <span className="hidden sm:inline">{tab.label}</span>
                 </span>
-                <span className="sm:hidden">{tab.shortLabel}</span>
-                <span className="hidden sm:inline">{tab.label}</span>
               </button>
             );
           })}
         </div>
       </div>
 
-      {/* Active tab description */}
       {activeTabData && (
-        <p className="text-sm text-[var(--color-text-muted)] mb-6">
-          {activeTabData.description}
-        </p>
+        <CalculatorFrame
+          stamp={activeTabData.label}
+          title={activeTabData.frameTitle}
+          subhead={activeTabData.frameSubhead}
+        >
+          {activeTab === "historical" && <InvestCalculator history={history} />}
+          {activeTab === "dca" && <DCACalculator volatilityStats={volatilityStats} />}
+          {activeTab === "dividends" && <DividendCalculator />}
+          {activeTab === "tfsa-rrsp" && (
+            <TFSARRSPCalculator volatilityStats={volatilityStats} />
+          )}
+          {activeTab === "fire" && <FIRECalculator volatilityStats={volatilityStats} />}
+        </CalculatorFrame>
       )}
-
-      {/* Tab content */}
-      <div>
-        {activeTab === "historical" && (
-          <InvestCalculator history={history} />
-        )}
-        {activeTab === "dca" && <DCACalculator volatilityStats={volatilityStats} />}
-        {activeTab === "dividends" && <DividendCalculator />}
-        {activeTab === "tfsa-rrsp" && <TFSARRSPCalculator volatilityStats={volatilityStats} />}
-        {activeTab === "fire" && <FIRECalculator volatilityStats={volatilityStats} />}
-      </div>
     </div>
   );
 }
@@ -158,10 +157,14 @@ export default function CalculatorTabs({ history, volatilityStats }: CalculatorT
   return (
     <Suspense
       fallback={
-        <div className="card-editorial p-1.5 mb-6">
-          <div className="flex sm:grid sm:grid-cols-5 gap-1.5 overflow-x-auto hide-scrollbar">
-            {[1,2,3,4,5].map(i => (
-              <div key={i} className="skeleton h-11 min-w-[90px] shrink-0 rounded-lg" />
+        <div className="border-b border-[var(--ink)] mb-2">
+          <div className="flex sm:grid sm:grid-cols-5 gap-0 overflow-x-auto hide-scrollbar">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div
+                key={i}
+                className="skeleton h-[52px] min-w-[120px] shrink-0"
+                style={{ borderRadius: 0 }}
+              />
             ))}
           </div>
         </div>
