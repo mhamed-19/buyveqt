@@ -1,10 +1,16 @@
 import type { Metadata } from "next";
-import PageShell from "@/components/layout/PageShell";
+import InteriorShell from "@/components/broadsheet/InteriorShell";
 import CalculatorTabs from "@/components/invest/CalculatorTabs";
+import StandingFeature from "@/components/invest/StandingFeature";
 import { getDailyHistory } from "@/lib/data";
 import { computeVolatilityStats } from "@/lib/data/volatility";
 import { JsonLd } from "@/components/seo/JsonLd";
-import { buildBreadcrumbSchema, canonicalUrl, SITE_NAME, SITE_URL } from "@/lib/seo-config";
+import {
+  buildBreadcrumbSchema,
+  canonicalUrl,
+  SITE_NAME,
+  SITE_URL,
+} from "@/lib/seo-config";
 import { expandParams } from "@/lib/share-params";
 
 export const revalidate = 86400; // 24 hours
@@ -42,14 +48,14 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
 
   if (!tab || !hasResult) {
     return {
-      title: "VEQT Calculators — Historical Returns, DCA, Dividends, TFSA/RRSP & FIRE",
+      title: "The Reckoner — VEQT Calculators",
       description:
-        "Free VEQT investment calculators. See what your investment would be worth today, plan DCA contributions, estimate dividend income, project TFSA/RRSP growth, and plan your path to FIRE.",
+        "Five reckonings on the boring fund: lookback, drip, yield, shelter, exit. Free VEQT calculators for Canadian investors.",
       alternates: { canonical: canonicalUrl("/invest") },
       openGraph: {
-        title: "VEQT Investment Calculators",
+        title: "The Reckoner — VEQT Calculators",
         description:
-          "Historical return calculator, DCA planner, dividend income estimator, and TFSA/RRSP growth projector for VEQT investors.",
+          "Lookback, drip, yield, shelter, exit. Five reckonings on Vanguard's boring all-equity fund.",
         url: canonicalUrl("/invest"),
       },
     };
@@ -129,14 +135,14 @@ export default async function InvestPage() {
   try {
     historyResult = await getDailyHistory("VEQT", "full");
   } catch {
-    // Will show DataUnavailable in the component
+    // Will show DataUnavailable in the calculator component
   }
 
   // Compute volatility stats server-side (once per 24h ISR cycle)
   const volatilityStats = computeVolatilityStats(historyResult);
 
   return (
-    <PageShell>
+    <InteriorShell>
       <JsonLd
         data={buildBreadcrumbSchema([
           { name: "Home", path: "/" },
@@ -164,44 +170,99 @@ export default async function InvestPage() {
           },
         }}
       />
-      <main className="flex-1 mx-auto w-full max-w-6xl px-4 py-10">
-        {/* Editorial hero */}
-        <div className="mb-10">
-          <p className="section-label mb-3">Investment Tools</p>
-          <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl font-normal text-[var(--color-text-primary)] leading-[1.1] max-w-2xl">
-            VEQT Calculators
-          </h1>
-          <p className="mt-4 text-[var(--color-text-secondary)] max-w-xl leading-relaxed">
-            Five tools to help you plan, visualize, and understand your VEQT
-            investment. Powered by real historical data.
+
+      {/* SECTION: Page head ─────────────────────────────────────── */}
+      <section className="pt-8 sm:pt-10 pb-2 bs-enter">
+        <p className="bs-stamp mb-3">The Reckoner</p>
+        <h1
+          className="bs-display text-[2.25rem] sm:text-[3.25rem] lg:text-[4.25rem] leading-[0.98]"
+          style={{ color: "var(--ink)" }}
+        >
+          Run the figures,
+          <br />
+          <em className="bs-display-italic">slowly.</em>
+        </h1>
+        <p
+          className="bs-body italic mt-5 max-w-[58ch] text-[1.0625rem]"
+          style={{ color: "var(--ink-soft)" }}
+        >
+          Five reckonings on the boring fund — what it would have been,
+          what it might be, what it pays, what it shelters, and how soon
+          it could buy you out.
+        </p>
+      </section>
+
+      {/* SECTION: The Standing — feature lookback stat ─────────── */}
+      <StandingFeature history={historyResult} />
+
+      {/* SECTION: The Questions — tab selector + active calc ───── */}
+      <section
+        className="mt-10 sm:mt-14 pt-6 border-t-2 border-[var(--ink)]"
+        aria-labelledby="questions-heading"
+      >
+        <p id="questions-heading" className="bs-stamp mb-3">
+          The Questions
+        </p>
+        <h2
+          className="bs-display text-[1.5rem] sm:text-[2rem] mb-5"
+          style={{ color: "var(--ink)" }}
+        >
+          <em className="bs-display-italic">Pick the question</em> you came
+          here to ask
+        </h2>
+
+        <CalculatorTabs
+          history={historyResult}
+          volatilityStats={volatilityStats}
+        />
+      </section>
+
+      {/* SECTION: Fine print ─────────────────────────────────────── */}
+      <section
+        className="mt-10 sm:mt-14 pt-6 border-t-2 border-[var(--ink)]"
+        aria-labelledby="invest-fineprint-heading"
+      >
+        <p id="invest-fineprint-heading" className="bs-stamp mb-3">
+          The Fine Print
+        </p>
+        <h2
+          className="bs-display text-[1.5rem] sm:text-[2rem] mb-5"
+          style={{ color: "var(--ink)" }}
+        >
+          <em className="bs-display-italic">What these are,</em> and what
+          they aren&apos;t
+        </h2>
+
+        <div
+          className="bs-body text-[15px] leading-[1.65] space-y-4 max-w-[62ch]"
+          style={{ color: "var(--ink)" }}
+        >
+          <p>
+            These reckoners use simplified assumptions for illustration.
+            They don&apos;t account for fees, taxes, inflation, or the
+            full shape of market volatility — only the bones of the math.
           </p>
-          {/* Stats bar */}
-          <div className="mt-5 flex items-center gap-5 text-xs text-[var(--color-text-muted)]">
-            <span className="flex items-center gap-1.5">
-              <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" className="text-[var(--color-accent)]">
-                <path d="M8 2a.75.75 0 01.75.75v4.5h4.5a.75.75 0 010 1.5h-4.5v4.5a.75.75 0 01-1.5 0v-4.5h-4.5a.75.75 0 010-1.5h4.5v-4.5A.75.75 0 018 2z" />
-              </svg>
-              5 calculators
-            </span>
-            <span className="text-[var(--color-border)]">&middot;</span>
-            <span>Real VEQT prices since 2019</span>
-            <span className="text-[var(--color-border)]">&middot;</span>
-            <span>Free, no signup</span>
-          </div>
+          <p>
+            <em>Past performance is not a forecast.</em> The Lookback
+            tells you what was; the other four ask you to assume a future
+            return rate. Reasonable assumptions still produce wide
+            ranges — change a 7% input to 5% and watch what happens.
+          </p>
+          <p>
+            None of this is financial advice. It&apos;s arithmetic, run
+            slowly, on one ETF. Your situation, taxes, and risk tolerance
+            are your own to weigh.
+          </p>
         </div>
 
-        <CalculatorTabs history={historyResult} volatilityStats={volatilityStats} />
-
-        {/* Disclaimer */}
-        <div className="card-editorial p-4 mt-10">
-          <p className="text-[11px] text-[var(--color-text-muted)] leading-relaxed max-w-prose">
-            These calculators use simplified assumptions for illustration purposes.
-            They do not account for all fees, taxes, inflation, or market
-            volatility. Past performance does not guarantee future results. Not
-            financial advice.
-          </p>
-        </div>
-      </main>
-    </PageShell>
+        <p
+          className="bs-caption italic mt-6 pt-4 border-t border-[var(--color-border)] text-[11px]"
+          style={{ color: "var(--ink-soft)" }}
+        >
+          Source: VEQT historical price data via Yahoo Finance · Updated
+          daily
+        </p>
+      </section>
+    </InteriorShell>
   );
 }
