@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getQuote, getDailyHistory } from "@/lib/data";
 import { ALLOWED_SYMBOLS } from "@/lib/data/symbols";
 import { computeReturn, ytdCutoff, oneYearAgoCutoff } from "@/lib/data/returns";
+import { computeRiskMetrics, type RiskMetrics } from "@/lib/risk-metrics";
 
 export const revalidate = 300; // 5 minutes — Yahoo is free, refresh frequently
 
@@ -13,6 +14,12 @@ interface FundQuote {
   dividendYield: number | null;
   ytdReturn: number | null;
   oneYearReturn: number | null;
+  /**
+   * Drawdown / recovery measured over the fund's full available
+   * history. Null if history is too short (< 30 sessions) to be
+   * meaningful, or if the history fetch failed.
+   */
+  risk: RiskMetrics | null;
   source?: string;
   error: boolean;
 }
@@ -32,9 +39,18 @@ async function fetchQuote(symbol: string): Promise<FundQuote> {
 
     let ytdReturn: number | null = null;
     let oneYearReturn: number | null = null;
+    let risk: RiskMetrics | null = null;
     if (history) {
       ytdReturn = computeReturn(history.data, quoteData.price, ytdCutoff());
       oneYearReturn = computeReturn(history.data, quoteData.price, oneYearAgoCutoff());
+      // Drawdown/recovery uses adjusted closes so dividends don't
+      // manufacture phantom drops. Series is already oldest-first.
+      risk = computeRiskMetrics(
+        history.data.map((d) => ({
+          date: d.date,
+          close: d.adjustedClose || d.close,
+        }))
+      );
     }
 
     return {
@@ -45,6 +61,7 @@ async function fetchQuote(symbol: string): Promise<FundQuote> {
       dividendYield: quoteData.dividendYield || null,
       ytdReturn,
       oneYearReturn,
+      risk,
       source: quoteData.source,
       error: false,
     };
@@ -57,6 +74,7 @@ async function fetchQuote(symbol: string): Promise<FundQuote> {
       dividendYield: null,
       ytdReturn: null,
       oneYearReturn: null,
+      risk: null,
       error: true,
     };
   }
