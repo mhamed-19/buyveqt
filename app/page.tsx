@@ -9,6 +9,9 @@ import RegionCards from "@/components/broadsheet/RegionCards";
 import Letters from "@/components/broadsheet/Letters";
 import Colophon from "@/components/broadsheet/Colophon";
 import SeverityMeter from "@/components/broadsheet/SeverityMeter";
+import EditionRecommends, {
+  type RecommendsZone,
+} from "@/components/broadsheet/EditionRecommends";
 import HeroSparkline from "@/components/broadsheet/HeroSparkline";
 import { useRegions } from "@/lib/useRegions";
 import { computeLeadHeadline } from "@/lib/lead-headline";
@@ -143,6 +146,15 @@ export default function Home() {
             <SeverityMeter reading={severity} loading={loading} />
           </div>
         </section>
+
+        {/* ─────────────────── TODAY'S EDITION RECOMMENDS ─────────────────── */}
+        {severity && (
+          <section className="pb-8 sm:pb-10 bs-enter">
+            <EditionRecommends
+              zone={severity.zone.toLowerCase() as RecommendsZone}
+            />
+          </section>
+        )}
 
         {/* ─────────────────────── THE REGIONS ─────────────────────── */}
         <section className="py-8 sm:py-12 bs-enter">

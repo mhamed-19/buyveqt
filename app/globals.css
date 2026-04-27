@@ -762,6 +762,71 @@ body::after {
 }
 
 /* ──────────────────────────────────────────────────────────
+   Today's edition recommends — homepage rec-board
+   Ports designs/Round2-Plan.html .rec-board.
+   ────────────────────────────────────────────────────────── */
+
+[data-broadsheet] .bs-rec-board {
+  display: block;
+  border-top: 2px solid var(--ink);
+  border-bottom: 2px solid var(--ink);
+  padding: 24px 0;
+  margin: 0;
+}
+[data-broadsheet] .bs-rec-board__head {
+  display: block;
+  margin-bottom: 14px;
+}
+[data-broadsheet] .bs-rec-board__zone {
+  display: inline-block;
+  font-family: var(--font-sans);
+  font-size: 9px;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--stamp);
+  border: 1px solid var(--stamp);
+  padding: 2px 7px;
+  margin-left: 10px;
+  vertical-align: 4px;
+}
+[data-broadsheet] .bs-rec-board__verdict {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 2.1rem;
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  margin: 0 0 14px;
+  max-width: 36ch;
+  color: var(--ink);
+}
+[data-broadsheet] .bs-rec-board__read {
+  display: inline-block;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--ink);
+  border-bottom: 1.5px solid var(--ink);
+  padding-bottom: 1px;
+  text-decoration: none;
+  transition: color 0.12s, border-color 0.12s;
+}
+[data-broadsheet] .bs-rec-board__read:hover {
+  color: var(--stamp);
+  border-bottom-color: var(--stamp);
+}
+
+@media (max-width: 640px) {
+  [data-broadsheet] .bs-rec-board__verdict {
+    font-size: 1.5rem;
+    line-height: 1.15;
+  }
+}
+
+/* ──────────────────────────────────────────────────────────
    Volatility heatmap (homepage compact + /inside-veqt hero)
    Ports designs/Inside-VEQT.html and Round2-Plan.html. Cell
    colors are inline (computed by shade()); this block owns
