@@ -84,7 +84,9 @@ const ZONE_LABEL: Record<VolatilitySeverity, string> = {
 };
 
 interface BuiltCell {
-  kind: "filled" | "empty";
+  /** filled = real session, empty = in-range gap (holiday or weekend on mobile),
+   *  placeholder = out-of-range padding before first or after last session. */
+  kind: "filled" | "empty" | "placeholder";
   entry?: VolatilityHeatmapEntry;
   isToday?: boolean;
   iso?: string;
@@ -108,6 +110,8 @@ function buildCells(
   const weekSpan =
     Math.round((endMonday.getTime() - startMonday.getTime()) / 86_400_000 / 7) +
     1;
+  const firstMs = first.getTime();
+  const lastMs = last.getTime();
 
   const cells: BuiltCell[] = [];
   for (let c = 0; c < weekSpan; c++) {
@@ -115,7 +119,9 @@ function buildCells(
       const dayOffset = c * 7 + r;
       const cellDate = addDays(startMonday, dayOffset);
       const iso = toISO(cellDate);
-      const found = r < 5 ? byDate.get(iso) : undefined; // weekends never carry a session
+      const cellMs = cellDate.getTime();
+      const isWeekend = r >= 5;
+      const found = isWeekend ? undefined : byDate.get(iso);
       if (found) {
         cells.push({
           kind: "filled",
@@ -123,6 +129,11 @@ function buildCells(
           isToday: todayDate !== null && iso === todayDate,
           iso,
         });
+      } else if (cellMs < firstMs || cellMs > lastMs || isWeekend) {
+        // Outside the data window OR a weekend on the mobile transposed grid
+        // — render an invisible placeholder so the grid alignment is preserved
+        // without drawing dashed boxes for days that aren't trading sessions.
+        cells.push({ kind: "placeholder" });
       } else {
         cells.push({ kind: "empty", iso });
       }
@@ -145,6 +156,7 @@ export default function VolatilityHeatmap({
 }: VolatilityHeatmapProps) {
   const router = useRouter();
   const wrapRef = useRef<HTMLDivElement | null>(null);
+  const cellRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const [tip, setTip] = useState<TipState | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   const dismissTimer = useRef<number | null>(null);
@@ -169,8 +181,34 @@ export default function VolatilityHeatmap({
     [history, todayIndex, rows]
   );
 
-  function handleCellClick(cell: BuiltCell) {
-    if (cell.kind === "empty" || !cell.entry) return;
+  function handleCellClick(cell: BuiltCell, index: number) {
+    if (cell.kind !== "filled" || !cell.entry) return;
+    // On touch devices the first tap pins the tooltip; the second tap (on the
+    // same cell) navigates. This avoids the iOS pattern where tap immediately
+    // navigates and the tooltip is never seen.
+    if (isMobile) {
+      const isPinned = tip?.index === index;
+      if (!isPinned) {
+        const cellRect = (
+          cellRefs.current[index] as HTMLElement | undefined
+        )?.getBoundingClientRect();
+        const wrap = wrapRef.current?.getBoundingClientRect();
+        if (cellRect && wrap) {
+          setTip({
+            index,
+            x: cellRect.left - wrap.left + cellRect.width / 2,
+            y: cellRect.top - wrap.top + cellRect.height + 6,
+          });
+        }
+        if (dismissTimer.current) window.clearTimeout(dismissTimer.current);
+        dismissTimer.current = window.setTimeout(
+          () => setTip(null),
+          5000
+        );
+        return;
+      }
+      // Already pinned → navigate.
+    }
     if (onCellClick) {
       onCellClick(cell.entry.date);
       return;
@@ -188,6 +226,7 @@ export default function VolatilityHeatmap({
     e: React.PointerEvent<HTMLButtonElement>,
     index: number
   ) {
+    if (e.pointerType !== "mouse") return; // touch handled in handleCellClick
     const wrap = wrapRef.current;
     if (!wrap) return;
     const rect = wrap.getBoundingClientRect();
@@ -198,13 +237,9 @@ export default function VolatilityHeatmap({
     });
   }
 
-  function handlePointerLeave() {
+  function handlePointerLeave(e: React.PointerEvent<HTMLDivElement>) {
+    if (e.pointerType !== "mouse") return; // don't dismiss touch-pinned tip on pointer-leave
     setTip(null);
-  }
-
-  function handleTouchStart() {
-    if (dismissTimer.current) window.clearTimeout(dismissTimer.current);
-    dismissTimer.current = window.setTimeout(() => setTip(null), 3000);
   }
 
   const tipCell = tip !== null ? cells[tip.index] : null;
@@ -224,6 +259,15 @@ export default function VolatilityHeatmap({
         }}
       >
         {cells.map((cell, i) => {
+          if (cell.kind === "placeholder") {
+            return (
+              <span
+                key={`p-${i}`}
+                className="bs-heatmap__cell bs-heatmap__cell--placeholder"
+                aria-hidden
+              />
+            );
+          }
           if (cell.kind === "empty") {
             return (
               <span
@@ -237,19 +281,22 @@ export default function VolatilityHeatmap({
           const cls = ["bs-heatmap__cell"];
           if (cell.isToday) cls.push("bs-heatmap__cell--today");
           if (e.hasDispatch) cls.push("bs-heatmap__cell--dispatch");
+          if (tip?.index === i) cls.push("bs-heatmap__cell--pinned");
           const sign = e.pct >= 0 ? "+" : "";
           const aria = `${e.date}: ${sign}${e.pct.toFixed(2)}% (${ZONE_LABEL[e.severity]})`;
           return (
             <button
               type="button"
               key={`c-${i}`}
+              ref={(el) => {
+                cellRefs.current[i] = el;
+              }}
               className={cls.join(" ")}
               style={{ background: shade(e.pct) }}
               aria-label={aria}
-              onClick={() => handleCellClick(cell)}
+              onClick={() => handleCellClick(cell, i)}
               onPointerMove={(ev) => handlePointerMove(ev, i)}
               onPointerEnter={(ev) => handlePointerMove(ev, i)}
-              onTouchStart={handleTouchStart}
             />
           );
         })}
@@ -257,9 +304,10 @@ export default function VolatilityHeatmap({
 
       {tip && tipEntry && (
         <div
-          className="bs-heatmap__tip"
+          className={`bs-heatmap__tip ${isMobile ? "bs-heatmap__tip--pinned" : ""}`}
           style={{ left: tip.x, top: tip.y }}
           role="tooltip"
+          onClick={(e) => e.stopPropagation()}
         >
           <div className="bs-heatmap__tip-date">{formatTipDate(tipEntry.date)}</div>
           <div

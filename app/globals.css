@@ -800,8 +800,14 @@ body::after {
 [data-broadsheet] .bs-region-card-link {
   text-decoration: none;
   color: inherit;
-  padding: 0 8px;
-  margin: 0 -8px;
+  /* Inner padding so the dispatch ordinal and card content have breathing
+   * room from the page edge on mobile and from the card divider on every
+   * viewport. Padding-top is repeated explicitly to compose with Tailwind's
+   * pt-5 (1.25rem) without surprises across reorderings. */
+  padding-left: 6px;
+  padding-right: 6px;
+  padding-top: 1.25rem;
+  padding-bottom: 4px;
   transition: background 0.15s;
 }
 [data-broadsheet] .bs-region-card-link:hover,
@@ -912,12 +918,28 @@ body::after {
 [data-broadsheet] .bs-region__name em {
   font-style: italic;
 }
+[data-broadsheet] .bs-region__head-right {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+}
 [data-broadsheet] .bs-region__ord {
   font-family: var(--font-display);
   font-weight: 500;
   font-variant-numeric: tabular-nums;
   color: var(--stamp);
   font-size: 1rem;
+}
+[data-broadsheet] .bs-region__chev {
+  font-family: var(--font-sans);
+  color: var(--ink-soft);
+  font-size: 14px;
+  line-height: 1;
+  transition: transform 0.18s;
+  transform: rotate(0deg);
+}
+[data-broadsheet] .bs-region__chev.is-open {
+  transform: rotate(180deg);
 }
 [data-broadsheet] .bs-region__full {
   font-family: var(--font-display);
@@ -1327,11 +1349,11 @@ body::after {
   font-family: var(--font-display);
   font-style: italic;
   font-weight: 500;
-  font-size: 2.1rem;
-  line-height: 1.1;
+  font-size: 1.75rem;
+  line-height: 1.2;
   letter-spacing: -0.015em;
   margin: 0 0 14px;
-  max-width: 36ch;
+  max-width: 38ch;
   color: var(--ink);
 }
 [data-broadsheet] .bs-rec-board__read {
@@ -1353,9 +1375,15 @@ body::after {
 }
 
 @media (max-width: 640px) {
+  [data-broadsheet] .bs-rec-board {
+    padding: 18px 0;
+  }
+  [data-broadsheet] .bs-rec-board__head {
+    margin-bottom: 10px;
+  }
   [data-broadsheet] .bs-rec-board__verdict {
-    font-size: 1.5rem;
-    line-height: 1.15;
+    font-size: 1.375rem;
+    line-height: 1.2;
   }
 }
 
@@ -1394,6 +1422,11 @@ body::after {
   background: color-mix(in oklab, var(--ink) 5%, transparent);
   cursor: pointer;
   transition: transform 0.12s, box-shadow 0.12s;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
 }
 [data-broadsheet] .bs-heatmap__cell:hover {
   transform: scale(1.16);
@@ -1416,9 +1449,26 @@ body::after {
   box-shadow: none;
 }
 
+/* Out-of-range padding cell — invisible spacer that preserves grid alignment
+ * without drawing a dashed box for "before the data" or "after today" days. */
+[data-broadsheet] .bs-heatmap__cell--placeholder {
+  background: transparent;
+  cursor: default;
+  pointer-events: none;
+}
+[data-broadsheet] .bs-heatmap__cell--placeholder:hover {
+  transform: none;
+  box-shadow: none;
+}
+
 [data-broadsheet] .bs-heatmap__cell--today {
   box-shadow: 0 0 0 1.5px var(--paper), 0 0 0 3px var(--stamp);
   z-index: 1;
+}
+
+[data-broadsheet] .bs-heatmap__cell--pinned {
+  box-shadow: 0 0 0 1.5px var(--paper), 0 0 0 3px var(--ink);
+  z-index: 2;
 }
 
 [data-broadsheet] .bs-heatmap__cell--dispatch::after {
@@ -1439,11 +1489,17 @@ body::after {
   color: var(--paper);
   padding: 10px 14px;
   min-width: 220px;
+  max-width: 260px;
   border: 1px solid var(--ink);
   box-shadow: 4px 4px 0 0 var(--rule);
   font-family: var(--font-sans);
   font-size: 11px;
   pointer-events: none;
+  transform: translateX(-12px); /* nudge so the arrow lines up with cursor */
+}
+[data-broadsheet] .bs-heatmap__tip--pinned {
+  transform: translateX(-50%); /* center under the tapped cell */
+  pointer-events: auto;
 }
 [data-broadsheet] .bs-heatmap__tip::before {
   content: "";
@@ -1454,6 +1510,10 @@ body::after {
   height: 10px;
   background: var(--ink);
   transform: rotate(45deg);
+}
+[data-broadsheet] .bs-heatmap__tip--pinned::before {
+  left: 50%;
+  margin-left: -5px;
 }
 [data-broadsheet] .bs-heatmap__tip-date {
   font-family: var(--font-display);
