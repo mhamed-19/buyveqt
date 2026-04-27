@@ -82,13 +82,15 @@ function RegionCard({
   contribScale,
   drill,
 }: RegionCardProps) {
+  // Default-open on every viewport. The accordion behavior is opt-in for users
+  // who want to collapse a card; nothing is hidden by default so the data is
+  // always visible without an extra tap.
   const [open, setOpen] = useState(true);
-
-  // Default-open on desktop, default-collapsed on mobile.
+  const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
     if (typeof window === "undefined") return;
     const mq = window.matchMedia("(max-width: 640px)");
-    const apply = () => setOpen(!mq.matches);
+    const apply = () => setIsMobile(mq.matches);
     apply();
     mq.addEventListener("change", apply);
     return () => mq.removeEventListener("change", apply);
@@ -130,8 +132,18 @@ function RegionCard({
         <span className="bs-region__name">
           {region.label ?? region.region}
         </span>
-        <span className="bs-region__ord" aria-hidden>
-          {ORDINAL[ordinal - 1] ?? `№ ${pad2(ordinal)}`}
+        <span className="bs-region__head-right">
+          <span className="bs-region__ord" aria-hidden>
+            {ORDINAL[ordinal - 1] ?? `№ ${pad2(ordinal)}`}
+          </span>
+          {isMobile && (
+            <span
+              className={`bs-region__chev ${open ? "is-open" : ""}`}
+              aria-hidden
+            >
+              ▾
+            </span>
+          )}
         </span>
       </button>
       <p className="bs-region__full">
