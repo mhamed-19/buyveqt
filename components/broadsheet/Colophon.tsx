@@ -22,17 +22,17 @@ export default function Colophon() {
           <ul className="space-y-1.5 bs-body text-[0.95rem]">
             <li>
               <Link href="/compare" className="bs-link">
-                The Comparison
+                Compare
               </Link>
             </li>
             <li>
               <Link href="/invest" className="bs-link">
-                The Calculator
+                Calculators
               </Link>
             </li>
             <li>
               <Link href="/inside-veqt" className="bs-link">
-                The Portfolio
+                Inside VEQT
               </Link>
             </li>
             <li>
