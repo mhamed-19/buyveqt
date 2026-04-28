@@ -13,7 +13,7 @@ import EditionRecommends, {
   type RecommendsZone,
 } from "@/components/broadsheet/EditionRecommends";
 import VolatilityHeatmap from "@/components/broadsheet/VolatilityHeatmap";
-import { classifyReturns, toHeatmapHistory } from "@/lib/volatility";
+import { classifyReturns } from "@/lib/volatility";
 import HeroSparkline from "@/components/broadsheet/HeroSparkline";
 import { useRegions } from "@/lib/useRegions";
 import { computeLeadHeadline } from "@/lib/lead-headline";
@@ -80,11 +80,12 @@ export default function Home() {
   );
 
   // 90-day heatmap data — computed from the same historical series.
+  // ClassifiedReturn is structurally compatible with VolatilityHeatmapEntry
+  // (date / pct / severity), so we pass the slice directly.
   const heatmapHistory = useMemo(() => {
     const source = fullHistory ?? historical;
     if (!source || source.length < 2) return [];
-    const { returns } = classifyReturns(source);
-    return toHeatmapHistory(returns.slice(-90));
+    return classifyReturns(source).returns.slice(-90);
   }, [fullHistory, historical]);
 
   // Inception return — prefer the full since-inception fetch so the "If you'd
@@ -178,6 +179,7 @@ export default function Home() {
                 history={heatmapHistory}
                 size="compact"
                 todayIndex={heatmapHistory.length - 1}
+                interactiveCells={false}
               />
             </Link>
           </section>

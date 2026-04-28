@@ -1,13 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import VolatilityHeatmap, {
-  type VolatilityHeatmapEntry,
-} from "@/components/broadsheet/VolatilityHeatmap";
+import { useEffect, useMemo, useRef, useState } from "react";
+import VolatilityHeatmap from "@/components/broadsheet/VolatilityHeatmap";
 import { useVeqtData } from "@/lib/useVeqtData";
 import { classifyReturns, type ClassifiedReturn } from "@/lib/volatility";
 
 type Range = "30D" | "90D" | "YTD" | "1Y";
+const RANGES: Range[] = ["30D", "90D", "YTD", "1Y"];
 
 function sliceByRange(returns: ClassifiedReturn[], range: Range): ClassifiedReturn[] {
   if (returns.length === 0) return [];
@@ -36,22 +35,12 @@ export default function HeatBoard() {
   const { data, loading } = useVeqtData();
   const [range, setRange] = useState<Range>("90D");
 
-  const { returns: allReturns } = useMemo(() => {
-    if (!data?.historical) return { returns: [], sigma: 0 };
-    return classifyReturns(data.historical);
+  const allReturns = useMemo(() => {
+    if (!data?.historical) return [];
+    return classifyReturns(data.historical).returns;
   }, [data?.historical]);
 
   const slice = useMemo(() => sliceByRange(allReturns, range), [allReturns, range]);
-
-  const heatmapHistory: VolatilityHeatmapEntry[] = useMemo(
-    () =>
-      slice.map((r) => ({
-        date: r.date,
-        pct: r.pct,
-        severity: r.severity,
-      })),
-    [slice]
-  );
 
   const todayIndex = slice.length > 0 ? slice.length - 1 : -1;
 
@@ -86,21 +75,25 @@ export default function HeatBoard() {
     };
   }, [slice]);
 
-  // After initial mount, if URL hash points at #heatmap, smooth-scroll into view.
+  // If the URL hash points at #heatmap, smooth-scroll into view AFTER the
+  // heatmap data lands and the section grows past its skeleton size. Without
+  // this guard the scroll fires while the section is still ~200px tall, then
+  // the page reflows once data loads and the user ends up looking at the
+  // wrong spot.
+  const didScrollRef = useRef(false);
   useEffect(() => {
+    if (didScrollRef.current) return;
+    if (loading || slice.length === 0) return;
     if (typeof window === "undefined") return;
-    if (window.location.hash === "#heatmap") {
-      const el = document.getElementById("heatmap");
-      if (el) {
-        // Defer so React has painted.
-        requestAnimationFrame(() => {
-          el.scrollIntoView({ behavior: "smooth", block: "start" });
-        });
-      }
-    }
-  }, []);
-
-  const ranges: Range[] = ["30D", "90D", "YTD", "1Y"];
+    if (window.location.hash !== "#heatmap") return;
+    const el = document.getElementById("heatmap");
+    if (!el) return;
+    didScrollRef.current = true;
+    // One more frame so the heatmap cells finish laying out.
+    requestAnimationFrame(() => {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }, [loading, slice.length]);
 
   return (
     <section id="heatmap" className="bs-heatboard mb-14 sm:mb-16">
@@ -122,7 +115,7 @@ export default function HeatBoard() {
       {/* Controls row — range buttons + comparison toggle (placeholder) */}
       <div className="bs-heatboard__controls">
         <div className="bs-heatboard__range" role="group" aria-label="Time range">
-          {ranges.map((r) => (
+          {RANGES.map((r) => (
             <button
               key={r}
               type="button"
@@ -141,11 +134,10 @@ export default function HeatBoard() {
           role="group"
           aria-label="Comparison fund"
         >
-          <button
-            type="button"
-            className="bs-heatboard__ctrl is-current"
-            aria-pressed="true"
-          >
+          {/* VEQT is the only fund here today; XEQT is queued. The buttons
+              are visually a toggle but neither has aria-pressed because nothing
+              actually toggles yet — that would lie to assistive tech. */}
+          <button type="button" className="bs-heatboard__ctrl is-current" disabled>
             VEQT
           </button>
           <button
@@ -219,9 +211,9 @@ export default function HeatBoard() {
 
       {/* Heatmap */}
       <div className="bs-heatboard__grid-wrap">
-        {!loading && heatmapHistory.length > 0 ? (
+        {!loading && slice.length > 0 ? (
           <VolatilityHeatmap
-            history={heatmapHistory}
+            history={slice}
             size="hero"
             todayIndex={todayIndex}
           />

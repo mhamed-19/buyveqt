@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRegions, type Region } from "@/lib/useRegions";
 import {
   REGION_DRILL,
-  type DrillRow,
   type RegionDrillReference,
 } from "@/data/region-drilldown";
 
@@ -12,6 +11,10 @@ const ORDINAL = ["№ 01", "№ 02", "№ 03", "№ 04"];
 // Bars never grow past 45% so the value labels in the empty half don't
 // crash into the next column.
 const MAX_BAR_PCT = 0.45;
+const REGION_ORDER = ["VUN", "VCN", "VIU", "VEE"];
+const DRILL_BY_TICKER = new Map<string, RegionDrillReference>(
+  REGION_DRILL.map((d) => [d.ticker, d])
+);
 
 function pad2(n: number): string {
   return n.toString().padStart(2, "0");
@@ -27,12 +30,13 @@ function fmtPp(n: number): string {
   return `${sign}${n.toFixed(2)}pp`;
 }
 
-function leaderIndex(items: { abs: number }[]): number {
+function leaderIndex(values: number[]): number {
   let bestIdx = 0;
   let bestAbs = -Infinity;
-  for (let i = 0; i < items.length; i += 1) {
-    if (items[i].abs > bestAbs) {
-      bestAbs = items[i].abs;
+  for (let i = 0; i < values.length; i += 1) {
+    const abs = Math.abs(values[i]);
+    if (abs > bestAbs) {
+      bestAbs = abs;
       bestIdx = i;
     }
   }
@@ -45,6 +49,7 @@ interface RegionCardProps {
   isLeader: boolean;
   contribScale: number; // max |contribution| across the 4 regions
   drill: RegionDrillReference | null;
+  isMobile: boolean;
 }
 
 function DirectionalBar({
@@ -81,20 +86,12 @@ function RegionCard({
   isLeader,
   contribScale,
   drill,
+  isMobile,
 }: RegionCardProps) {
   // Default-open on every viewport. The accordion behavior is opt-in for users
   // who want to collapse a card; nothing is hidden by default so the data is
   // always visible without an extra tap.
   const [open, setOpen] = useState(true);
-  const [isMobile, setIsMobile] = useState(false);
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const mq = window.matchMedia("(max-width: 640px)");
-    const apply = () => setIsMobile(mq.matches);
-    apply();
-    mq.addEventListener("change", apply);
-    return () => mq.removeEventListener("change", apply);
-  }, []);
 
   const pct = region.changePercent ?? 0;
   const contribution = region.contribution ?? 0;
@@ -114,7 +111,7 @@ function RegionCard({
   const rowAbs = (drill?.rows ?? []).map((r) => Math.abs(r.pct));
   const rowMax = rowAbs.length > 0 ? Math.max(...rowAbs, 0.01) : 1;
   const drillLeaderIdx = drill
-    ? leaderIndex(drill.rows.map((r) => ({ abs: Math.abs(r.pct) })))
+    ? leaderIndex(drill.rows.map((r) => r.pct))
     : -1;
 
   return (
@@ -215,6 +212,32 @@ export default function RegionDrilldown() {
   const { payload, loading } = useRegions();
   const regions: Region[] = payload?.regions ?? [];
 
+  // Single matchMedia listener shared across all four cards.
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(max-width: 640px)");
+    const apply = () => setIsMobile(mq.matches);
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
+
+  const { ordered, leaderIdx, contribScale } = useMemo(() => {
+    if (regions.length === 0) {
+      return { ordered: [] as Region[], leaderIdx: -1, contribScale: 0.01 };
+    }
+    const ord = [...regions].sort(
+      (a, b) => REGION_ORDER.indexOf(a.ticker) - REGION_ORDER.indexOf(b.ticker)
+    );
+    const contribs = ord.map((r) => r.contribution ?? 0);
+    return {
+      ordered: ord,
+      leaderIdx: leaderIndex(contribs),
+      contribScale: contribs.reduce((m, x) => (Math.abs(x) > m ? Math.abs(x) : m), 0.01),
+    };
+  }, [regions]);
+
   if (loading || regions.length === 0) {
     return (
       <section className="bs-regions">
@@ -245,17 +268,6 @@ export default function RegionDrilldown() {
     );
   }
 
-  // Sort regions to a deterministic order matching the mockup
-  // (US, Canada, Intl Developed, Emerging) and find the leader.
-  const ORDER = ["VUN", "VCN", "VIU", "VEE"];
-  const ordered = [...regions].sort(
-    (a, b) => ORDER.indexOf(a.ticker) - ORDER.indexOf(b.ticker)
-  );
-
-  const contribAbs = ordered.map((r) => Math.abs(r.contribution ?? 0));
-  const leaderIdx = leaderIndex(contribAbs.map((a) => ({ abs: a })));
-  const contribScale = contribAbs.reduce((m, x) => (x > m ? x : m), 0.01);
-
   return (
     <section className="bs-regions">
       <header className="bs-regions__head">
@@ -279,7 +291,8 @@ export default function RegionDrilldown() {
             ordinal={i + 1}
             isLeader={i === leaderIdx}
             contribScale={contribScale}
-            drill={REGION_DRILL.find((d) => d.ticker === region.ticker) ?? null}
+            drill={DRILL_BY_TICKER.get(region.ticker) ?? null}
+            isMobile={isMobile}
           />
         ))}
       </div>

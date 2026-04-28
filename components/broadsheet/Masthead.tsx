@@ -6,38 +6,42 @@ import { isMarketOpen } from "@/lib/data/market-hours";
 import { useTheme } from "@/components/ThemeProvider";
 
 interface DateInfo {
-  weekday: string;
   weekdayShort: string;
   full: string;
   compact: string;
   date: Date;
 }
 
+// Hoisted Intl formatters — todayInToronto() runs every 60s via setInterval.
+// Constructing DateTimeFormat instances is non-trivial; share them across
+// ticks.
+const TZ = "America/Toronto";
+const FMT_LONG = new Intl.DateTimeFormat("en-CA", {
+  timeZone: TZ,
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+});
+const FMT_SHORT_WEEKDAY = new Intl.DateTimeFormat("en-CA", {
+  timeZone: TZ,
+  weekday: "short",
+});
+const FMT_NUM = new Intl.DateTimeFormat("en-CA", {
+  timeZone: TZ,
+  year: "numeric",
+  month: "numeric",
+  day: "numeric",
+});
+
 function todayInToronto(): DateInfo {
   const now = new Date();
-  const fmt = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/Toronto",
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
   const parts = Object.fromEntries(
-    fmt.formatToParts(now).map((p) => [p.type, p.value])
+    FMT_LONG.formatToParts(now).map((p) => [p.type, p.value])
   );
-  const weekdayShort = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/Toronto",
-    weekday: "short",
-  }).format(now);
+  const weekdayShort = FMT_SHORT_WEEKDAY.format(now);
   const numParts = Object.fromEntries(
-    new Intl.DateTimeFormat("en-CA", {
-      timeZone: "America/Toronto",
-      year: "numeric",
-      month: "numeric",
-      day: "numeric",
-    })
-      .formatToParts(now)
-      .map((p) => [p.type, p.value])
+    FMT_NUM.formatToParts(now).map((p) => [p.type, p.value])
   );
   const torontoDate = new Date(
     Number(numParts.year),
@@ -45,7 +49,6 @@ function todayInToronto(): DateInfo {
     Number(numParts.day)
   );
   return {
-    weekday: parts.weekday ?? "",
     weekdayShort,
     full: `${parts.weekday}, ${parts.month} ${parts.day}, ${parts.year}`,
     compact: `${parts.weekday}, ${parts.month} ${parts.day}`,
@@ -111,7 +114,6 @@ const VOL_LAUNCH_YEAR = 2024;
 
 export default function Masthead() {
   const [date, setDate] = useState<DateInfo>(() => ({
-    weekday: "",
     weekdayShort: "",
     full: "",
     compact: "",

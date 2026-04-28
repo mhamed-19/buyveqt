@@ -92,9 +92,10 @@ export default function RegionCards({ regions, loading }: RegionCardsProps) {
           <Link
             key={r.ticker}
             href={`/inside-veqt#regions-${slug}`}
-            className="bs-region-card-link relative pt-5 border-t-2 border-[var(--ink)] flex flex-col"
+            className="bs-region-card-link"
             aria-label={`See ${r.label} drilldown on Inside VEQT`}
           >
+            <article className="relative pt-5 border-t-2 border-[var(--ink)] flex flex-col">
             {/* ── Identity strip ── */}
             <header className="flex items-start gap-3 mb-4">
               <span
@@ -284,6 +285,7 @@ export default function RegionCards({ regions, loading }: RegionCardsProps) {
                 </ul>
               </div>
             )}
+            </article>
           </Link>
         );
       })}
