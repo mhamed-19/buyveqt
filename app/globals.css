@@ -806,14 +806,12 @@ body::after {
 [data-broadsheet] .bs-region-card-link {
   text-decoration: none;
   color: inherit;
-  /* Inner padding so the dispatch ordinal and card content have breathing
-   * room from the page edge on mobile and from the card divider on every
-   * viewport. Padding-top is repeated explicitly to compose with Tailwind's
-   * pt-5 (1.25rem) without surprises across reorderings. */
+  display: block;
+  /* Light horizontal padding so the dispatch ordinal isn't flush against
+   * the page edge on mobile. The inner <article> owns the border-top and
+   * the rest of the layout. */
   padding-left: 6px;
   padding-right: 6px;
-  padding-top: 1.25rem;
-  padding-bottom: 4px;
   transition: background 0.15s;
 }
 [data-broadsheet] .bs-region-card-link:hover,

@@ -1,7 +1,4 @@
-import type {
-  VolatilityHeatmapEntry,
-  VolatilitySeverity,
-} from "@/components/broadsheet/VolatilityHeatmap";
+import type { VolatilitySeverity } from "@/components/broadsheet/VolatilityHeatmap";
 
 export interface ClassifiedReturn {
   date: string;
@@ -14,10 +11,13 @@ export interface ClassifiedReturn {
  * Severity is sigma-banded (≤1σ typical, 1–2σ notable, 2–3σ unusual, >3σ rare)
  * against the full input window, so the same classification is consistent
  * whether you slice 30 days or 252 from the result.
+ *
+ * `ClassifiedReturn` is structurally compatible with `VolatilityHeatmapEntry`
+ * — the heatmap component can consume the returned array directly.
  */
 export function classifyReturns(
   historical: { date: string; close: number }[]
-): { returns: ClassifiedReturn[]; sigma: number } {
+): { returns: ClassifiedReturn[] } {
   const raw: { date: string; pct: number }[] = [];
   for (let i = 1; i < historical.length; i += 1) {
     const prev = historical[i - 1].close;
@@ -29,27 +29,17 @@ export function classifyReturns(
       });
     }
   }
-  if (raw.length === 0) return { returns: [], sigma: 0 };
+  if (raw.length === 0) return { returns: [] };
   const mean = raw.reduce((s, r) => s + r.pct, 0) / raw.length;
   const variance =
     raw.reduce((s, r) => s + (r.pct - mean) ** 2, 0) / raw.length;
   const sigma = Math.sqrt(variance);
 
-  const classified: ClassifiedReturn[] = raw.map((r) => {
+  const returns: ClassifiedReturn[] = raw.map((r) => {
     const z = sigma > 0 ? Math.abs(r.pct) / sigma : 0;
     const severity: VolatilitySeverity =
       z < 1 ? "typical" : z < 2 ? "notable" : z < 3 ? "unusual" : "rare";
     return { date: r.date, pct: r.pct, severity };
   });
-  return { returns: classified, sigma };
-}
-
-export function toHeatmapHistory(
-  classified: readonly ClassifiedReturn[]
-): VolatilityHeatmapEntry[] {
-  return classified.map((r) => ({
-    date: r.date,
-    pct: r.pct,
-    severity: r.severity,
-  }));
+  return { returns };
 }

@@ -23,6 +23,13 @@ export interface VolatilityHeatmapProps {
   todayIndex: number;
   /** Override default click behavior. */
   onCellClick?: (date: string) => void;
+  /**
+   * When the heatmap is wrapped in a parent `<Link>` (homepage), set this
+   * to false so the inner cell buttons don't double-navigate alongside the
+   * outer link. Tooltips on hover still work; clicking the cell falls through
+   * to the wrapping link.
+   */
+  interactiveCells?: boolean;
 }
 
 // Match the mockup's shade() exactly so cell colors visually match cell-by-cell.
@@ -153,6 +160,7 @@ export default function VolatilityHeatmap({
   size,
   todayIndex,
   onCellClick,
+  interactiveCells = true,
 }: VolatilityHeatmapProps) {
   const router = useRouter();
   const wrapRef = useRef<HTMLDivElement | null>(null);
@@ -181,6 +189,13 @@ export default function VolatilityHeatmap({
     [history, todayIndex, rows]
   );
 
+  // When the underlying grid changes (resize transposes rows, range slice
+  // swaps history, or 5-min refresh appends today), any pinned tooltip's
+  // index is stale — clear it.
+  useEffect(() => {
+    setTip(null);
+  }, [cells.length, rows]);
+
   function handleCellClick(cell: BuiltCell, index: number) {
     if (cell.kind !== "filled" || !cell.entry) return;
     // On touch devices the first tap pins the tooltip; the second tap (on the
@@ -208,6 +223,10 @@ export default function VolatilityHeatmap({
         return;
       }
       // Already pinned → navigate.
+    }
+    if (!interactiveCells) {
+      // Wrapped in a parent link — let the click bubble up to the outer <a>.
+      return;
     }
     if (onCellClick) {
       onCellClick(cell.entry.date);
@@ -259,10 +278,14 @@ export default function VolatilityHeatmap({
         }}
       >
         {cells.map((cell, i) => {
+          // Stable key per grid slot. When a cell at index i changes kind
+          // (e.g. range slice swaps a placeholder for a real session), the
+          // key stays the same so React diffs in place instead of remounting.
+          const key = `${i}`;
           if (cell.kind === "placeholder") {
             return (
               <span
-                key={`p-${i}`}
+                key={key}
                 className="bs-heatmap__cell bs-heatmap__cell--placeholder"
                 aria-hidden
               />
@@ -271,7 +294,7 @@ export default function VolatilityHeatmap({
           if (cell.kind === "empty") {
             return (
               <span
-                key={`e-${i}`}
+                key={key}
                 className="bs-heatmap__cell bs-heatmap__cell--empty"
                 aria-hidden
               />
@@ -287,7 +310,7 @@ export default function VolatilityHeatmap({
           return (
             <button
               type="button"
-              key={`c-${i}`}
+              key={key}
               ref={(el) => {
                 cellRefs.current[i] = el;
               }}
