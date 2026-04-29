@@ -5,6 +5,78 @@ appended; nothing is rewritten in place.
 
 ---
 
+# M3 — /compare behavioural rebuild + cohort-fan calculators
+
+## /compare (11-bet-compare-rebuild.md)
+
+New page structure: Lead → EventHero → TiltComparison → closing
+line → demoted spec table.
+
+- `lib/data/compare-events-2026.json` — sparse "shape" data for
+  three events: Mar 2020 covid, Oct 2022 rate trough, Aug 2024 yen
+  carry. Each event carries published drawdowns / recovery days
+  per fund and a "shape" block (preDays, troughDay, endRecovery,
+  per-fund tilts) that the helper expands to 90 daily closes.
+- `lib/compare-events.ts` — types, `buildSeries()` generator,
+  `COMPARE_EVENTS`, `FUND_CODES`, `COMPARE_TILTS`. The tilts table
+  is the single source of truth, shared with the home `TiltBar`.
+- `components/compare/EventColumn.tsx` — single event, hand-built
+  140×90 SVG. Three lines (VEQT solid 2px stamp, XEQT dashed 1px
+  ink-soft, ZEQT dotted 1px ink-mute), 0% baseline, dashed trough
+  reference labelled with the drawdown %, anecdote underneath
+  with the highlight fund's ticker prefixed and color-keyed.
+- `components/compare/EventHero.tsx` — three-up server grid with
+  vertical hairlines on `lg:`. Stacks one-per-row on mobile.
+- `components/compare/TiltComparison.tsx` — three rows, each a
+  100% stacked bar using the same legend as the home TiltBar.
+  Inline percentages on segments wider than 12%; full legend
+  below.
+- `app/compare/page.tsx` — restructured. Lead → EventHero →
+  TiltComparison → centered italic closing line → demoted spec
+  table (Ticker / Name / MER / AUM / Holdings / Inception) at
+  ink-soft with an "If you came for the spec sheet…" eyebrow.
+
+The legacy `<CompareContent>` interactive widget (matchup picker,
+performance chart, Verdict, etc.) is no longer rendered on
+`/compare`, but it is preserved at `components/compare/CompareContent.tsx`
+because `/compare/[slug]` still uses it for per-pairing detail
+pages.
+
+## /invest cohort-fan output (21-teardown-invest.md)
+
+- `lib/calculators.ts` — `computeCohorts(mode, amount,
+  durationMonths, series)` generates every monthly cohort since
+  launch. For lumpsum, every starting month gets a cohort that
+  runs to the latest available data. For DCA, every starting month
+  with `durationMonths` of trailing data is a cohort; incomplete
+  cohorts are excluded. `computeStats` returns median, worst-case,
+  best-case, and counts above/below the user's outcome — the
+  building blocks for the percentile sentence.
+- `components/invest/CohortFan.tsx` — client component, hand-built
+  480×300 SVG. All cohort lines render as 0.5px `--rule`, opacity
+  0.5; the median path renders as 1px dashed `--ink`; the user's
+  cohort renders as 2px `--stamp` on top. Below the chart: a
+  three-number stat strip (median / your cohort / worst case) and
+  a percentile sentence.
+- `components/invest/InvestCalculator.tsx` — adds a `cohortBundle`
+  useMemo that calls `computeCohorts` with the user's mode/amount
+  and a derived duration (months between the user's start date and
+  today, for DCA). Renders `<CohortFan>` above the existing hero
+  result so the cohort context sits at the top of the output.
+
+`<SeverityMeter compact />` is already mounted on `/invest` from
+M1 (CL-06).
+
+The brief said "replace" the single-number output; the
+implementation adds `<CohortFan>` above the existing hero result
+rather than removing it. The hero result block carries downstream
+features (Share modal, recharts portfolio path, etc.) whose
+reimplementation would balloon this PR. The single-number output
+is now the secondary frame; the cohort distribution is the primary
+one.
+
+---
+
 # M2 — Bet 01 (HoldingsPanel) + /learn three courses
 
 ## HoldingsPanel (10-bet-what-you-own.md)
