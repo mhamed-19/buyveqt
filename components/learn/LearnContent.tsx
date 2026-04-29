@@ -11,12 +11,6 @@ import EditorsPicks from "./EditorsPicks";
 
 interface LearnContentProps {
   articles: ArticleFrontmatter[];
-  /**
-   * When the archive is rendered below the three-courses grid on
-   * `/learn`, the category headings shrink and shift to ink-soft so
-   * the courses dominate the page. Defaults to `false`.
-   */
-  demoted?: boolean;
 }
 
 type CategoryKey =
@@ -54,10 +48,7 @@ function timeBucket(s: string): "quick" | "standard" | "long" {
   return "long";
 }
 
-export default function LearnContent({
-  articles,
-  demoted = false,
-}: LearnContentProps) {
+export default function LearnContent({ articles }: LearnContentProps) {
   const params = useSearchParams();
 
   const cat = params.get("cat") ?? null;
@@ -110,23 +101,15 @@ export default function LearnContent({
     <>
       <FilterRail />
 
-      {/* Editor's Picks — only in default state, and only when not
-          demoted (the courses block above takes over the "what to read
-          first" job). */}
-      {isDefault && !demoted && <EditorsPicks articles={articles} />}
+      {/* Editor's Picks — only in default state */}
+      {isDefault && <EditorsPicks articles={articles} />}
 
-      {/* Paths grid — only in default state, hidden when demoted. */}
-      {isDefault && !demoted && <PathsGrid articles={articles} />}
+      {/* Paths grid — only in default state */}
+      {isDefault && <PathsGrid articles={articles} />}
 
       {/* Main content */}
       {showGrouped ? (
-        <div
-          className={
-            demoted
-              ? "mt-2 space-y-8 sm:space-y-10"
-              : "mt-4 space-y-12 sm:space-y-16"
-          }
-        >
+        <div className="mt-4 space-y-12 sm:space-y-16">
           {(
             [
               "beginner",
@@ -141,32 +124,24 @@ export default function LearnContent({
               <section key={catKey}>
                 <div className="flex items-baseline justify-between gap-4 mb-2">
                   <h2
-                    className={
-                      demoted
-                        ? "bs-display text-[1.125rem] sm:text-[1.25rem]"
-                        : "bs-display text-[1.75rem] sm:text-[2rem]"
-                    }
-                    style={{
-                      color: demoted ? "var(--ink-soft)" : "var(--ink)",
-                    }}
+                    className="bs-display text-[1.75rem] sm:text-[2rem]"
+                    style={{ color: "var(--ink)" }}
                   >
                     {CATEGORY_HEADINGS[catKey]}
                   </h2>
                   <p
                     className="bs-label tabular-nums"
-                    style={{ color: "var(--ink-mute)" }}
+                    style={{ color: "var(--ink-soft)" }}
                   >
                     {entries.length} dispatches
                   </p>
                 </div>
-                {!demoted && (
-                  <p
-                    className="bs-caption italic mb-2"
-                    style={{ color: "var(--ink-soft)" }}
-                  >
-                    {CATEGORY_BLURB[catKey]}
-                  </p>
-                )}
+                <p
+                  className="bs-caption italic mb-2"
+                  style={{ color: "var(--ink-soft)" }}
+                >
+                  {CATEGORY_BLURB[catKey]}
+                </p>
                 <ul>
                   {entries.map((article) => (
                     <ArticleRow key={article.slug} article={article} />

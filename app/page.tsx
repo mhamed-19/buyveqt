@@ -6,8 +6,6 @@ import { useVeqtData } from "@/lib/useVeqtData";
 import { COMPARISON_DATA } from "@/lib/constants";
 import Masthead from "@/components/broadsheet/Masthead";
 import RegionCards from "@/components/broadsheet/RegionCards";
-import HoldingsPanel from "@/components/broadsheet/HoldingsPanel";
-import { COURSES } from "@/lib/learn";
 import Letters from "@/components/broadsheet/Letters";
 import Colophon from "@/components/broadsheet/Colophon";
 import TiltBar from "@/components/broadsheet/TiltBar";
@@ -30,26 +28,36 @@ function formatCAD(n: number, digits = 0): string {
 }
 
 /**
- * Course One — the home page's reading order. Pulled from
- * `lib/learn.ts` so the home page and `/learn` share one source of
- * truth for the syllabus. The home page renders only Course 1 as a
- * Step 1/2/3 strip; the full three-course grid lives on `/learn`.
+ * Course One — the home page reading order. Hardcoded inline so the
+ * home page can pick its own three articles independent of the
+ * `/learn` syllabus. Step 2 maps to `veqt-vs-diy-portfolio` because
+ * that article is the canonical "why one fund and not five"
+ * argument; step 3 to `veqt-is-down` because the most-likely
+ * panicked landing is the most useful first read.
  */
-const COURSE_1 = COURSES[0];
-
-/**
- * One-line excerpts for the home strip. The course data file holds
- * just title + slug, since titles are reused on `/learn`. Excerpts
- * are home-page-specific editorial copy.
- */
-const COURSE_1_EXCERPTS: Record<string, string> = {
-  "what-is-veqt":
-    "Twelve thousand stocks in one ticker, run by Vanguard for a quarter-percent. The structural argument before any of the trading talk.",
-  "veqt-canadian-home-bias":
-    "Four underlying ETFs, one Canadian tilt larger than the country's share of the global market. Here's why and what to do about it.",
-  "getting-started-with-veqt":
-    "Account choice, brokerage, first order. The boring mechanics, sequenced.",
-};
+const COURSE_1 = [
+  {
+    step: 1,
+    slug: "what-is-veqt",
+    title: "What VEQT actually is",
+    excerpt:
+      "Twelve thousand stocks in one ticker, run by Vanguard for a quarter-percent. The structural argument before any of the trading talk.",
+  },
+  {
+    step: 2,
+    slug: "veqt-vs-diy-portfolio",
+    title: "Why one fund and hold forever",
+    excerpt:
+      "The five-ETF DIY portfolio is the same equity exposure plus a quarterly chore. Here is the math on what that chore costs.",
+  },
+  {
+    step: 3,
+    slug: "veqt-is-down",
+    title: "What to do when it's down",
+    excerpt:
+      "Drawdowns are the price of equity returns. A short script for the days when your inbox tells you to sell.",
+  },
+];
 
 /**
  * Regional tilt for the home compare table. Weights are approximate Q1 2026
@@ -253,9 +261,6 @@ export default function Home() {
 
           <RegionCards regions={regions} loading={regionsLoading} />
         </section>
-
-        {/* ─────────────────────── WHAT YOU OWN ─────────────────────── */}
-        <HoldingsPanel />
 
         {/* ─────────────────────── FROM THE SUBREDDIT ─────────────────────── */}
         <section className="py-8 sm:py-12 bs-enter">
@@ -474,13 +479,13 @@ export default function Home() {
         {/* ─────────────────── LEARN DISPATCHES ─────────────────── */}
         <section className="py-8 sm:py-12 bs-enter">
           <div className="mb-8">
-            <p className="bs-stamp mb-2">Course One · {COURSE_1.title}</p>
+            <p className="bs-stamp mb-2">Course One</p>
             <h3 className="bs-display text-3xl sm:text-4xl lg:text-[2.75rem] leading-[1]">
               A reading order, in three parts.
             </h3>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-12">
-            {COURSE_1.articles.map((entry) => (
+            {COURSE_1.map((entry) => (
               <article key={entry.slug} className="flex flex-col">
                 <p className="bs-label mb-2">Step {entry.step}</p>
                 <Link href={`/learn/${entry.slug}`} className="group block">
@@ -489,7 +494,7 @@ export default function Home() {
                   </h4>
                 </Link>
                 <p className="bs-body mt-3 flex-1 text-[0.9375rem] leading-[1.5]">
-                  {COURSE_1_EXCERPTS[entry.slug] ?? ""}
+                  {entry.excerpt}
                 </p>
                 <Link
                   href={`/learn/${entry.slug}`}
