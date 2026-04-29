@@ -6,6 +6,7 @@ import { useVeqtData } from "@/lib/useVeqtData";
 import { COMPARISON_DATA } from "@/lib/constants";
 import Masthead from "@/components/broadsheet/Masthead";
 import RegionCards from "@/components/broadsheet/RegionCards";
+import HoldingsPanel from "@/components/broadsheet/HoldingsPanel";
 import Letters from "@/components/broadsheet/Letters";
 import Colophon from "@/components/broadsheet/Colophon";
 import TiltBar from "@/components/broadsheet/TiltBar";
@@ -261,6 +262,9 @@ export default function Home() {
 
           <RegionCards regions={regions} loading={regionsLoading} />
         </section>
+
+        {/* ─────────────────────── WHAT YOU OWN ─────────────────────── */}
+        <HoldingsPanel />
 
         {/* ─────────────────────── FROM THE SUBREDDIT ─────────────────────── */}
         <section className="py-8 sm:py-12 bs-enter">

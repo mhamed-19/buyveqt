@@ -1,0 +1,22 @@
+{
+  "_source": "Vanguard VEQT Q1 2026 quarterly disclosure (placeholder figures — refresh from https://www.vanguard.ca/individual/products/en/detail/etf/9560/equity)",
+  "_note": "TODO: refresh from the next quarterly factsheet. Regional totals reflect VEQT's four underlying ETFs (VUN / VCN / VIU / VEE) at quarter end. Top names from Vanguard's published 'top holdings' list with weights normalized to whole-fund share.",
+  "asOf": "2026-03-31",
+  "totalNames": 13478,
+  "regions": [
+    { "name": "United States",   "code": "US",  "weight": 0.434, "count": 3650 },
+    { "name": "Canada",          "code": "CA",  "weight": 0.318, "count": 230 },
+    { "name": "Developed ex-US", "code": "DEV", "weight": 0.180, "count": 1850 },
+    { "name": "Emerging Markets","code": "EM",  "weight": 0.068, "count": 7748 }
+  ],
+  "topNames": [
+    { "ticker": "AAPL",  "name": "Apple",         "weight": 0.0312, "region": "US" },
+    { "ticker": "MSFT",  "name": "Microsoft",     "weight": 0.0287, "region": "US" },
+    { "ticker": "NVDA",  "name": "Nvidia",        "weight": 0.0241, "region": "US" },
+    { "ticker": "AMZN",  "name": "Amazon",        "weight": 0.0152, "region": "US" },
+    { "ticker": "META",  "name": "Meta Platforms","weight": 0.0118, "region": "US" },
+    { "ticker": "RY.TO", "name": "Royal Bank",    "weight": 0.0181, "region": "CA" },
+    { "ticker": "TD.TO", "name": "TD Bank",       "weight": 0.0142, "region": "CA" },
+    { "ticker": "GOOGL", "name": "Alphabet",      "weight": 0.0136, "region": "US" }
+  ]
+}
