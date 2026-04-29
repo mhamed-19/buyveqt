@@ -18,6 +18,8 @@ import {
 import type { HistoricalData } from "@/lib/data/types";
 import DataFreshness from "@/components/ui/DataFreshness";
 import DataUnavailable from "@/components/ui/DataUnavailable";
+import CohortFan from "./CohortFan";
+import { computeCohorts, findUserCohort } from "@/lib/calculators";
 
 type Mode = "lump" | "dca";
 
@@ -358,6 +360,30 @@ export default function InvestCalculator({ history }: InvestCalculatorProps) {
     }
   }, [history, mode, amount, startDate, earliestDate, maxStartDate]);
 
+  // Cohort fan — every monthly cohort since launch.
+  // For DCA, the duration is whatever the user's window is in months.
+  const cohortBundle = useMemo(() => {
+    if (!history || history.data.length < 2 || amount < 100) {
+      return { cohorts: [], userCohort: null, durationMonths: 0 };
+    }
+    if (mode === "lump") {
+      const cohorts = computeCohorts("lumpsum", amount, 0, history.data);
+      const userCohort = findUserCohort(cohorts, startDate);
+      return { cohorts, userCohort, durationMonths: 0 };
+    }
+    // DCA: derive duration from user's start date through latest data.
+    const start = new Date(startDate + "T00:00:00");
+    const end = new Date(history.data[history.data.length - 1].date + "T00:00:00");
+    const dur = Math.max(
+      6,
+      (end.getFullYear() - start.getFullYear()) * 12 +
+        (end.getMonth() - start.getMonth())
+    );
+    const cohorts = computeCohorts("dca", amount, dur, history.data);
+    const userCohort = findUserCohort(cohorts, startDate);
+    return { cohorts, userCohort, durationMonths: dur };
+  }, [history, mode, amount, startDate]);
+
   // Validation messages
   const validationMsg = useMemo(() => {
     if (amount < 100) return "Please enter an amount of at least $100";
@@ -465,6 +491,18 @@ export default function InvestCalculator({ history }: InvestCalculatorProps) {
       {/* Results */}
       {result && !validationMsg && (
         <>
+          {/* Cohort fan — distribution context for the user's outcome */}
+          {cohortBundle.cohorts.length > 1 && (
+            <div className="border-t border-b border-[var(--ink)] py-6 sm:py-8">
+              <CohortFan
+                cohorts={cohortBundle.cohorts}
+                userCohort={cohortBundle.userCohort}
+                amount={amount}
+                durationMonths={cohortBundle.durationMonths}
+                mode={mode === "lump" ? "lumpsum" : "dca"}
+              />
+            </div>
+          )}
           {/* Hero Result */}
           <div className="bg-[color:var(--paper-deep)] p-5 sm:p-6">
             <p className="text-xs text-[var(--color-text-muted)] uppercase tracking-wider mb-1">
