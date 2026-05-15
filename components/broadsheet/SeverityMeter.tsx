@@ -1,7 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import type { SeverityReading } from "@/lib/severity";
 import { severitySentence } from "@/lib/severity";
+
+interface FurtherReading {
+  href: string;
+  label: string;
+}
 
 interface Props {
   reading: SeverityReading | null;
@@ -12,6 +18,13 @@ interface Props {
    * gauge on top, current severity word + benchmark caption underneath.
    */
   compact?: boolean;
+  /**
+   * Optional small "Further reading" link rendered after the editorial
+   * sentence — used by the home page to surface a per-day archive
+   * recommendation without committing a whole second card to the same
+   * data the meter is already publishing. Hidden in compact mode.
+   */
+  furtherReading?: FurtherReading;
 }
 
 /**
@@ -26,7 +39,12 @@ interface Props {
  *   3. The behavioural sentence underneath is keyed to the zone, so a
  *      holder gets a specific read of today rather than a template.
  */
-export default function SeverityMeter({ reading, loading, compact = false }: Props) {
+export default function SeverityMeter({
+  reading,
+  loading,
+  compact = false,
+  furtherReading,
+}: Props) {
   if (loading || !reading) {
     return (
       <div
@@ -236,6 +254,18 @@ export default function SeverityMeter({ reading, loading, compact = false }: Pro
           style={{ color: "var(--ink)" }}
         >
           {severitySentence(reading)}
+          {furtherReading && (
+            <>
+              {" "}
+              <Link
+                href={furtherReading.href}
+                className="bs-link italic"
+                style={{ color: "var(--ink-soft)" }}
+              >
+                Further reading: {furtherReading.label} &rarr;
+              </Link>
+            </>
+          )}
         </p>
       )}
     </div>

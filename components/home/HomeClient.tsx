@@ -9,14 +9,13 @@ import RegionCards from "@/components/broadsheet/RegionCards";
 import Colophon from "@/components/broadsheet/Colophon";
 import TiltBar from "@/components/broadsheet/TiltBar";
 import SeverityMeter from "@/components/broadsheet/SeverityMeter";
-import EditionRecommends from "@/components/broadsheet/EditionRecommends";
 import VolatilityHeatmap from "@/components/broadsheet/VolatilityHeatmap";
 import { classifyReturns } from "@/lib/volatility";
 import HeroSparkline from "@/components/broadsheet/HeroSparkline";
 import { useRegions } from "@/lib/useRegions";
 import { computeLeadHeadline } from "@/lib/lead-headline";
 import { computeSeverity } from "@/lib/severity";
-import { buildRecommendation } from "@/lib/edition-recommends";
+import { pickFurtherReading } from "@/lib/edition-recommends";
 
 function formatCAD(n: number, digits = 0): string {
   return n.toLocaleString("en-CA", {
@@ -104,22 +103,17 @@ export default function HomeClient({ lettersSlot }: HomeClientProps) {
     [fullHistory, quote?.changePercent]
   );
 
-  // Editor's-take recommendation — composed from the same severity reading
-  // and regional sleeves, seeded by the latest close date so the article
-  // pick and the verdict template are stable for a session but rotate
-  // across sessions instead of recycling the same twelve cells.
-  const recommendation = useMemo(() => {
-    if (!severity) return null;
+  // Per-day "Further reading" for the SeverityMeter — picked from a pool
+  // matched to the day's character (zone × direction) and rotated
+  // deterministically by the latest close date.
+  const furtherReading = useMemo(() => {
+    if (!severity) return undefined;
     const latestDate =
       fullHistory.length > 0
         ? fullHistory[fullHistory.length - 1].date
         : new Date().toISOString().slice(0, 10);
-    return buildRecommendation({
-      reading: severity,
-      regions,
-      dateKey: latestDate,
-    });
-  }, [severity, regions, fullHistory]);
+    return pickFurtherReading({ reading: severity, dateKey: latestDate });
+  }, [severity, fullHistory]);
 
   // 90-day heatmap data — computed from the same historical series.
   // ClassifiedReturn is structurally compatible with VolatilityHeatmapEntry
@@ -191,7 +185,11 @@ export default function HomeClient({ lettersSlot }: HomeClientProps) {
             </h2>
 
             {/* ── How unusual is today? — the behavioral anchor ── */}
-            <SeverityMeter reading={severity} loading={loading} />
+            <SeverityMeter
+              reading={severity}
+              loading={loading}
+              furtherReading={furtherReading}
+            />
           </div>
         </section>
 
@@ -219,13 +217,6 @@ export default function HomeClient({ lettersSlot }: HomeClientProps) {
                 interactiveCells={false}
               />
             </Link>
-          </section>
-        )}
-
-        {/* ─────────────────── EDITOR'S TAKE ─────────────────── */}
-        {recommendation && (
-          <section className="pb-8 sm:pb-10 bs-enter">
-            <EditionRecommends recommendation={recommendation} />
           </section>
         )}
 
