@@ -3,7 +3,7 @@
 import { FUNDS } from "@/data/funds";
 
 interface AllocationBarsProps {
-  selectedFunds: string[];
+  selected: string[];
 }
 
 /**
@@ -35,9 +35,9 @@ const REGION_STYLE: Record<
 const HATCH_PATTERN =
   "repeating-linear-gradient(45deg, color-mix(in oklab, var(--paper) 45%, transparent) 0 1px, transparent 1px 5px)";
 
-export default function AllocationBars({ selectedFunds }: AllocationBarsProps) {
+export default function AllocationBars({ selected }: AllocationBarsProps) {
   const allRegions = new Set<string>();
-  for (const t of selectedFunds) {
+  for (const t of selected) {
     FUNDS[t]?.geographyAllocation.forEach((g) => allRegions.add(g.region));
   }
 
@@ -59,7 +59,7 @@ export default function AllocationBars({ selectedFunds }: AllocationBarsProps) {
       </header>
 
       <ul className="space-y-5" role="list">
-        {selectedFunds.map((ticker) => {
+        {selected.map((ticker) => {
           const fund = FUNDS[ticker];
           if (!fund) return null;
           const isVeqt = ticker === "VEQT.TO";

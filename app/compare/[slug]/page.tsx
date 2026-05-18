@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import InteriorShell from "@/components/broadsheet/InteriorShell";
 import CompareContent from "@/components/compare/CompareContent";
 import { COMPARISON_PAGES, getComparison } from "@/data/comparisons";
 import BottomLine from "@/components/compare/BottomLine";
@@ -43,7 +42,7 @@ export default async function CompareSlugPage({ params }: PageProps) {
   }
 
   return (
-    <InteriorShell>
+    <>
       <JsonLd
         data={buildBreadcrumbSchema([
           { name: "Home", path: "/" },
@@ -51,44 +50,40 @@ export default async function CompareSlugPage({ params }: PageProps) {
           { name: page.title, path: `/compare/${page.slug}` },
         ])}
       />
-
-      {/* ── Page head ──────────────────────────────────────────── */}
-      <section className="pt-8 sm:pt-10 pb-6 bs-enter">
-        <p className="bs-stamp mb-3">A Single Bout</p>
-        <h1
-          className="bs-display text-[1.75rem] sm:text-[2.5rem] lg:text-[3rem] leading-[1.02]"
-          style={{ color: "var(--ink)" }}
-        >
-          {page.title}
-        </h1>
-        <p
-          className="bs-body mt-4 max-w-[64ch]"
-          style={{ color: "var(--ink)" }}
-        >
-          {page.intro}
-        </p>
-      </section>
-
-      <section className="bs-enter pb-10">
-        <CompareContent initialFunds={[...page.funds]} />
-
+      <CompareContent initialFunds={[...page.funds]} />
+      <div
+        style={{
+          maxWidth: 1400,
+          margin: "0 auto",
+          padding: "0 14px 48px",
+        }}
+      >
         <BottomLine
           slug={slug}
           fundA={page.funds[0]}
           fundB={page.funds[1]}
-          className="mt-8"
+          className="mt-2"
         />
-
-        <div className="mt-10 pt-6 border-t border-[var(--ink)]">
+        <div
+          style={{
+            marginTop: 32,
+            paddingTop: 18,
+            borderTop: "1px solid var(--rule-soft)",
+          }}
+        >
           <Link
             href="/compare"
-            className="bs-link bs-label"
-            style={{ letterSpacing: "0.14em" }}
+            className="ed-label"
+            style={{
+              color: "var(--ink-soft)",
+              textDecoration: "none",
+              letterSpacing: "0.14em",
+            }}
           >
             &larr; Back to all bouts
           </Link>
         </div>
-      </section>
-    </InteriorShell>
+      </div>
+    </>
   );
 }

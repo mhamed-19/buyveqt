@@ -21,7 +21,7 @@ interface FundQuote {
 }
 
 interface StatsTableProps {
-  selectedFunds: string[];
+  selected: string[];
 }
 
 type HighlightMode = "lowest" | "highest" | "none";
@@ -34,7 +34,7 @@ interface Row {
   render?: (ticker: string, quote: FundQuote | null) => ReactNode;
 }
 
-export default function StatsTable({ selectedFunds }: StatsTableProps) {
+export default function StatsTable({ selected }: StatsTableProps) {
   const [quotes, setQuotes] = useState<Record<string, FundQuote>>({});
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
@@ -44,7 +44,7 @@ export default function StatsTable({ selectedFunds }: StatsTableProps) {
       setLoading(true);
       try {
         const res = await fetch(
-          `/api/funds/compare?tickers=${selectedFunds.join(",")}`
+          `/api/funds/compare?tickers=${selected.join(",")}`
         );
         if (res.ok) {
           const json = await res.json();
@@ -58,7 +58,7 @@ export default function StatsTable({ selectedFunds }: StatsTableProps) {
       }
     }
     fetchQuotes();
-  }, [selectedFunds]);
+  }, [selected]);
 
   const quoteValues = Object.values(quotes);
   const uniqueSources = [
@@ -184,7 +184,7 @@ export default function StatsTable({ selectedFunds }: StatsTableProps) {
   function getBest(row: Row): string | null {
     if (row.highlight === "none" || !row.getNumericValue) return null;
     let best: { ticker: string; value: number } | null = null;
-    for (const t of selectedFunds) {
+    for (const t of selected) {
       const val = row.getNumericValue(t, quotes[t] ?? null);
       if (val == null) continue;
       if (
@@ -229,7 +229,7 @@ export default function StatsTable({ selectedFunds }: StatsTableProps) {
               >
                 Metric
               </th>
-              {selectedFunds.map((t) => {
+              {selected.map((t) => {
                 const isVeqt = t === "VEQT.TO";
                 return (
                   <th
@@ -272,7 +272,7 @@ export default function StatsTable({ selectedFunds }: StatsTableProps) {
                   >
                     {row.label}
                   </td>
-                  {selectedFunds.map((t) => {
+                  {selected.map((t) => {
                     const isBest = bestTicker === t;
                     const isVeqt = t === "VEQT.TO";
                     const value = row.getValue(t, quotes[t] ?? null);

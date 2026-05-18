@@ -1,5 +1,7 @@
 "use client";
 
+import SectionLabel from "@/components/ui/SectionLabel";
+
 interface Preset {
   id: string;
   label: string;
@@ -46,80 +48,105 @@ interface MatchupPresetsProps {
 }
 
 /**
- * Curated head-to-head shortcuts. Each preset reads like a fight card —
- * a labeled bout with a one-line caption. Selecting one swaps the entire
- * picker state in a single click. We mark the active card so users
- * recognise when their custom selection matches a known matchup.
+ * Refactored for M3: five horizontal bout cards. Active uses dark ink
+ * background with paper text; inactive uses paper-light. Mobile scrolls
+ * horizontally with snap behaviour (ed-snap-row); desktop is a 5-column
+ * grid.
  */
 export default function MatchupPresets({
   selected,
   onSelect,
 }: MatchupPresetsProps) {
-  // A preset is active when its funds match the current selection exactly
-  // (regardless of order).
   const sel = [...selected].sort().join("|");
 
   return (
     <section aria-labelledby="matchups-heading">
-      <header className="flex items-baseline justify-between gap-3 mb-3">
-        <p id="matchups-heading" className="bs-stamp">
-          Marquee Matchups
-        </p>
-        <p
-          className="bs-caption italic text-[11.5px]"
-          style={{ color: "var(--ink-soft)" }}
+      <header
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "baseline",
+          marginBottom: 12,
+          padding: "0 4px",
+        }}
+      >
+        <SectionLabel>
+          <span id="matchups-heading">Preset matchups</span>
+        </SectionLabel>
+        <span
+          className="matchups__hint"
+          style={{
+            fontFamily: "var(--font-sans)",
+            fontSize: 11,
+            color: "var(--ink-mute)",
+            fontWeight: 600,
+          }}
         >
-          Tap a card to load the fight
-        </p>
+          Swipe →
+        </span>
       </header>
 
-      <ul
-        className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3"
-        role="list"
-      >
+      <ul className="matchups__row ed-snap-row" role="list">
         {PRESETS.map((preset, idx) => {
           const presetKey = [...preset.funds].sort().join("|");
           const active = presetKey === sel;
-          const dispatchNumber = String(idx + 1).padStart(2, "0");
-
           return (
-            <li key={preset.id}>
+            <li
+              key={preset.id}
+              className="matchups__item"
+              style={{ listStyle: "none" }}
+            >
               <button
                 onClick={() => onSelect(preset.funds)}
                 aria-pressed={active}
-                className="group w-full text-left transition-colors"
                 style={{
-                  backgroundColor: active
-                    ? "var(--ink)"
-                    : "transparent",
+                  width: "100%",
+                  display: "block",
+                  textAlign: "left",
+                  appearance: "none",
+                  cursor: "pointer",
+                  background: active ? "var(--ink)" : "var(--paper-light)",
                   color: active ? "var(--paper)" : "var(--ink)",
-                  borderTop: active
-                    ? "2px solid var(--stamp)"
-                    : "2px solid var(--ink)",
-                  padding: "10px 12px 12px",
+                  border: active
+                    ? "1px solid var(--ink)"
+                    : "1px solid var(--rule-soft)",
+                  borderRadius: 14,
+                  padding: "16px 16px 14px",
                 }}
               >
                 <span
-                  className="bs-numerals not-italic block text-[10.5px] mb-1"
+                  className="ed-label"
                   style={{
-                    color: active ? "var(--stamp)" : "var(--ink-soft)",
-                    letterSpacing: "0.14em",
+                    color: active
+                      ? "rgba(246, 239, 220, 0.55)"
+                      : "var(--ink-mute)",
                   }}
                 >
-                  №{dispatchNumber}
+                  Bout {String(idx + 1).padStart(2, "0")}
                 </span>
                 <span
-                  className="bs-display block text-[15px] sm:text-base leading-tight"
-                  style={{ color: active ? "var(--paper)" : "var(--ink)" }}
+                  className="ed-numerals"
+                  style={{
+                    display: "block",
+                    fontFamily: "var(--font-display)",
+                    fontWeight: 500,
+                    fontSize: 20,
+                    letterSpacing: "-0.012em",
+                    marginTop: 8,
+                  }}
                 >
                   {preset.label}
                 </span>
                 <span
-                  className="bs-caption italic block mt-0.5 text-[11.5px] leading-snug"
                   style={{
+                    display: "block",
+                    fontFamily: "var(--font-serif)",
+                    fontStyle: "italic",
+                    fontSize: 13,
                     color: active
-                      ? "color-mix(in oklab, var(--paper) 75%, transparent)"
-                      : "var(--ink-soft)",
+                      ? "rgba(246, 239, 220, 0.75)"
+                      : "var(--ink-mute)",
+                    marginTop: 4,
                   }}
                 >
                   {preset.blurb}
@@ -129,6 +156,34 @@ export default function MatchupPresets({
           );
         })}
       </ul>
+
+      <style jsx>{`
+        .matchups__row {
+          display: flex;
+          gap: 10px;
+          padding: 0 4px 6px;
+        }
+        .matchups__item {
+          flex: 0 0 170px;
+          min-width: 170px;
+        }
+        @media (min-width: 1024px) {
+          .matchups__row {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 14px;
+            overflow: visible;
+            padding: 0;
+          }
+          .matchups__item {
+            flex: initial;
+            min-width: 0;
+          }
+          .matchups__hint {
+            display: none;
+          }
+        }
+      `}</style>
     </section>
   );
 }

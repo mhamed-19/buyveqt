@@ -1581,3 +1581,293 @@ body::after {
 .ed-safe-bottom {
   padding-bottom: max(24px, env(safe-area-inset-bottom));
 }
+
+/* ──────────────────────────────────────────────────────────
+   Round 4 — Learn page layout. Lives in globals so the Learn
+   components stay server-side (MDX/rsc + fs-based article data).
+   ────────────────────────────────────────────────────────── */
+
+.learn-hero {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+  padding: 8px 0 4px;
+}
+@media (min-width: 1024px) {
+  .learn-hero {
+    grid-template-columns: 6fr 6fr;
+    gap: 64px;
+    align-items: end;
+    padding: 16px 0 12px;
+  }
+}
+
+.course-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+@media (min-width: 768px) {
+  .course-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 26px;
+  }
+}
+.course-step {
+  padding: 20px 20px 22px;
+  background: rgba(246, 239, 220, 0.04);
+  border-radius: 14px;
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  transition: background 0.18s;
+}
+.course-step:hover {
+  background: rgba(246, 239, 220, 0.07);
+}
+.course-step__num {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(246, 239, 220, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 18px;
+  color: var(--paper);
+  margin-bottom: 14px;
+}
+
+.related-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+@media (min-width: 768px) {
+  .related-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+  }
+}
+.related-card {
+  display: block;
+  padding: 18px 18px;
+  border: 1px solid var(--rule-soft);
+  border-radius: 14px;
+  background: var(--paper-light);
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.15s, border-color 0.15s;
+}
+.related-card:hover {
+  background: var(--paper-warm);
+  border-color: var(--rule);
+}
+
+/* Article reader — prose typography. Scoped to .learn-article so it
+   doesn't leak into broadsheet pages still using .prose-custom. */
+.learn-article {
+  max-width: 32rem;
+  font-family: var(--font-sans);
+  font-size: 17px;
+  line-height: 1.65;
+  color: var(--ink-soft);
+}
+@media (min-width: 768px) {
+  .learn-article {
+    font-size: 18px;
+  }
+}
+.learn-article > p:first-of-type {
+  overflow: hidden;
+}
+.learn-article > p:first-of-type::first-letter {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 4em;
+  line-height: 0.85;
+  float: left;
+  padding: 0.06em 0.16em 0 0;
+  margin-top: 0.04em;
+  color: var(--ink);
+  shape-outside: margin-box;
+}
+@media (max-width: 640px) {
+  .learn-article > p:first-of-type::first-letter {
+    font-size: 3.4em;
+  }
+}
+.learn-article p {
+  margin: 0 0 1.125rem;
+  color: var(--ink-soft);
+}
+.learn-article h2 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 22px;
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+  margin: 36px 0 14px;
+  color: var(--ink);
+}
+@media (min-width: 768px) {
+  .learn-article h2 {
+    font-size: 30px;
+    margin: 44px 0 16px;
+    letter-spacing: -0.018em;
+  }
+}
+.learn-article h3 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 18px;
+  line-height: 1.2;
+  margin: 24px 0 8px;
+  color: var(--ink);
+}
+.learn-article strong {
+  font-weight: 600;
+  color: var(--ink);
+}
+.learn-article a {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+.learn-article a:hover {
+  color: var(--stamp);
+}
+.learn-article ul,
+.learn-article ol {
+  margin: 0 0 1.25rem 1.5rem;
+}
+.learn-article li {
+  margin-bottom: 0.5rem;
+}
+.learn-article blockquote {
+  border-left: 2px solid var(--rule);
+  padding: 0 0 0 1rem;
+  margin: 1.5rem 0;
+  color: var(--ink-mute);
+  font-family: var(--font-serif);
+  font-style: italic;
+}
+.learn-article table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.25rem 0;
+  font-size: 14px;
+}
+.learn-article th,
+.learn-article td {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--rule-soft);
+  text-align: left;
+}
+.learn-article th {
+  font-weight: 600;
+  color: var(--ink);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* ──────────────────────────────────────────────────────────
+   Round 4 — Reckoner pill row + shell. Same active-dark
+   convention as the inception band on the home page.
+   ────────────────────────────────────────────────────────── */
+
+.reckoner-pills {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(160px, 1fr);
+  gap: 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x mandatory;
+  padding: 4px 0 6px;
+}
+.reckoner-pills::-webkit-scrollbar {
+  display: none;
+}
+@media (min-width: 768px) {
+  .reckoner-pills {
+    grid-template-columns: repeat(5, 1fr);
+    grid-auto-flow: row;
+    overflow: visible;
+    scroll-snap-type: none;
+  }
+}
+
+.reckoner-pill {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid var(--rule-soft);
+  background: var(--paper-light);
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.18s, border-color 0.18s, transform 0.12s;
+  scroll-snap-align: start;
+  min-height: 70px;
+}
+.reckoner-pill:hover {
+  background: var(--paper-warm);
+}
+.reckoner-pill[data-active="true"] {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+
+.reckoner-pill__icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--paper-warm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 500;
+  flex-shrink: 0;
+  color: var(--ink);
+}
+.reckoner-pill__icon[data-active="true"] {
+  background: rgba(246, 239, 220, 0.12);
+  color: var(--paper);
+}
+
+.reckoner-pill__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.reckoner-pill__name {
+  font-size: 17px;
+  line-height: 1.1;
+  letter-spacing: -0.012em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Inputs inside the dark calculator shell. Lightens the default
+   broadsheet input chrome the calculators already use. */
+.reckoner-shell__body :is(input[type="number"], input[type="text"]) {
+  color: var(--paper);
+}
+.reckoner-shell__body label {
+  color: rgba(246, 239, 220, 0.7);
+}
