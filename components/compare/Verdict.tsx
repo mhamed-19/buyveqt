@@ -4,7 +4,7 @@ import Link from "next/link";
 import { getVerdict } from "@/lib/compare-verdicts";
 
 interface VerdictProps {
-  selectedFunds: string[];
+  selected: string[];
 }
 
 /**
@@ -16,9 +16,9 @@ interface VerdictProps {
  * headline, body in the broadsheet body face, optional CTA link below.
  * Sits in its own band, separated by the section's signature thick rule.
  */
-export default function Verdict({ selectedFunds }: VerdictProps) {
-  if (selectedFunds.length !== 2) return null;
-  const verdict = getVerdict(selectedFunds[0], selectedFunds[1]);
+export default function Verdict({ selected }: VerdictProps) {
+  if (selected.length !== 2) return null;
+  const verdict = getVerdict(selected[0], selected[1]);
   if (!verdict) return null;
 
   return (

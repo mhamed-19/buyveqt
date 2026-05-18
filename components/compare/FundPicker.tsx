@@ -1,6 +1,8 @@
 "use client";
 
+import SectionLabel from "@/components/ui/SectionLabel";
 import { FUNDS } from "@/data/funds";
+import { fundColor } from "@/lib/styles";
 
 interface FundPickerProps {
   selected: string[];
@@ -10,85 +12,94 @@ interface FundPickerProps {
 const FUND_OPTIONS = Object.values(FUNDS);
 
 /**
- * Custom-pick row beneath the marquee matchups. Each fund is a small
- * tile — ticker in the display face, provider as caption underneath.
- * Selected tiles invert (ink fill, paper text) with a vermilion top edge.
- * VEQT is permanently pinned (the "house" fighter) and styled with a
- * vermilion underline rather than the disabled pill greyout.
+ * Chip row of Pills with a color square + ticker. Active chips invert
+ * to ink fill / paper-light text. VEQT is pinned in slot 1 and can't
+ * be deselected — it shows as active with a non-interactive cursor.
  */
 export default function FundPicker({ selected, onToggle }: FundPickerProps) {
   return (
     <section aria-labelledby="picker-heading">
-      <header className="flex items-baseline justify-between gap-3 mb-3">
-        <p id="picker-heading" className="bs-stamp">
-          Or pick your own
-        </p>
-        <p
-          className="bs-caption italic text-[11.5px]"
-          style={{ color: "var(--ink-soft)" }}
+      <header
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "baseline",
+          marginBottom: 12,
+          padding: "0 4px",
+          gap: 12,
+          flexWrap: "wrap",
+        }}
+      >
+        <SectionLabel>
+          <span id="picker-heading">Or roll your own</span>
+        </SectionLabel>
+        <span
+          style={{
+            fontFamily: "var(--font-serif)",
+            fontStyle: "italic",
+            fontSize: 12,
+            color: "var(--ink-mute)",
+          }}
         >
-          VEQT stays in the ring
-        </p>
+          VEQT stays pinned in slot 1.
+        </span>
       </header>
 
-      <ul
-        className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-7 gap-2 sm:gap-2.5"
-        role="list"
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: 8,
+          padding: "0 4px",
+        }}
       >
         {FUND_OPTIONS.map((fund) => {
           const isActive = selected.includes(fund.ticker);
           const isVeqt = fund.ticker === "VEQT.TO";
+          const color = fundColor(fund.shortName);
           return (
-            <li key={fund.ticker}>
-              <button
-                onClick={() => !isVeqt && onToggle(fund.ticker)}
-                disabled={isVeqt}
-                aria-pressed={isActive}
-                className="group w-full text-left transition-colors"
+            <button
+              key={fund.ticker}
+              type="button"
+              onClick={() => !isVeqt && onToggle(fund.ticker)}
+              disabled={isVeqt}
+              aria-pressed={isActive}
+              style={{
+                appearance: "none",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "8px 14px",
+                borderRadius: 999,
+                cursor: isVeqt ? "default" : "pointer",
+                background: isActive
+                  ? "var(--ink)"
+                  : "transparent",
+                color: isActive ? "var(--paper-light)" : "var(--ink-soft)",
+                border: isActive
+                  ? "1px solid var(--ink)"
+                  : "1px solid var(--rule-soft)",
+                fontFamily: "var(--font-sans)",
+                fontSize: 12,
+                fontWeight: 600,
+                letterSpacing: "0.02em",
+              }}
+            >
+              <span
+                aria-hidden
                 style={{
-                  backgroundColor:
-                    isActive && !isVeqt
-                      ? "var(--ink)"
-                      : "transparent",
-                  color: isActive && !isVeqt ? "var(--paper)" : "var(--ink)",
-                  borderTop: isVeqt
-                    ? "2px solid var(--stamp)"
-                    : isActive
-                    ? "2px solid var(--stamp)"
-                    : "2px solid var(--ink)",
-                  padding: "8px 10px 10px",
-                  cursor: isVeqt ? "default" : "pointer",
+                  width: 8,
+                  height: 8,
+                  borderRadius: 2,
+                  background: color,
+                  display: "inline-block",
                 }}
-              >
-                <span
-                  className="bs-display block text-[15px] sm:text-base leading-tight"
-                  style={{
-                    color:
-                      isActive && !isVeqt
-                        ? "var(--paper)"
-                        : isVeqt
-                        ? "var(--stamp)"
-                        : "var(--ink)",
-                  }}
-                >
-                  {fund.shortName}
-                </span>
-                <span
-                  className="bs-caption italic block mt-0.5 text-[10.5px] truncate"
-                  style={{
-                    color:
-                      isActive && !isVeqt
-                        ? "color-mix(in oklab, var(--paper) 70%, transparent)"
-                        : "var(--ink-soft)",
-                  }}
-                >
-                  {isVeqt ? "house" : fund.provider}
-                </span>
-              </button>
-            </li>
+              />
+              {fund.shortName}
+            </button>
           );
         })}
-      </ul>
+      </div>
     </section>
   );
 }

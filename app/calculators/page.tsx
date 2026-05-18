@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
-import InteriorShell from "@/components/broadsheet/InteriorShell";
 import CalculatorTabs from "@/components/invest/CalculatorTabs";
+import ReckonerHero from "@/components/invest/ReckonerHero";
+import Card from "@/components/ui/Card";
+import SectionLabel from "@/components/ui/SectionLabel";
 import { getDailyHistory } from "@/lib/data";
 import { computeVolatilityStats } from "@/lib/data/volatility";
 import { JsonLd } from "@/components/seo/JsonLd";
@@ -141,101 +143,113 @@ export default async function CalculatorsPage() {
   const volatilityStats = computeVolatilityStats(historyResult);
 
   return (
-    <InteriorShell>
-      <JsonLd
-        data={buildBreadcrumbSchema([
-          { name: "Home", path: "/" },
-          { name: "Calculators", path: "/calculators" },
-        ])}
-      />
-      <JsonLd
-        data={{
-          "@context": "https://schema.org",
-          "@type": "WebApplication",
-          name: "VEQT Investment Calculators",
-          description:
-            "Historical return calculator, DCA planner, dividend income estimator, and TFSA/RRSP growth projector.",
-          url: canonicalUrl("/calculators"),
-          applicationCategory: "FinanceApplication",
-          operatingSystem: "Any",
-          offers: {
-            "@type": "Offer",
-            price: "0",
-            priceCurrency: "CAD",
-          },
-          publisher: {
-            "@type": "Organization",
-            name: SITE_NAME,
-          },
+    <main
+      style={{
+        background: "var(--paper)",
+        color: "var(--ink)",
+        minHeight: "100dvh",
+      }}
+    >
+      <div
+        style={{
+          maxWidth: 1400,
+          margin: "0 auto",
+          padding: "20px 14px 48px",
+          display: "flex",
+          flexDirection: "column",
+          gap: 24,
         }}
-      />
-
-      {/* SECTION: Page head ─────────────────────────────────────── */}
-      <section className="pt-8 sm:pt-10 pb-6 bs-enter">
-        <h1
-          className="bs-display text-[1.875rem] sm:text-[2.25rem] leading-[1.1]"
-          style={{ color: "var(--ink)" }}
-        >
-          Run the figures, <em className="bs-display-italic">slowly.</em>
-        </h1>
-      </section>
-
-      {/* SECTION: Calculator tabs ──────────────────────────────── */}
-      <section
-        className="mt-4 sm:mt-6"
-        aria-labelledby="calculators-heading"
       >
-        <h2 id="calculators-heading" className="sr-only">
-          Calculators
-        </h2>
-        <CalculatorTabs
-          history={historyResult}
-          volatilityStats={volatilityStats}
+        <JsonLd
+          data={buildBreadcrumbSchema([
+            { name: "Home", path: "/" },
+            { name: "Calculators", path: "/calculators" },
+          ])}
         />
-      </section>
+        <JsonLd
+          data={{
+            "@context": "https://schema.org",
+            "@type": "WebApplication",
+            name: "VEQT Investment Calculators",
+            description:
+              "Historical return calculator, DCA planner, dividend income estimator, and TFSA/RRSP growth projector.",
+            url: canonicalUrl("/calculators"),
+            applicationCategory: "FinanceApplication",
+            operatingSystem: "Any",
+            offers: {
+              "@type": "Offer",
+              price: "0",
+              priceCurrency: "CAD",
+            },
+            publisher: {
+              "@type": "Organization",
+              name: SITE_NAME,
+            },
+          }}
+        />
 
-      {/* SECTION: Fine print ─────────────────────────────────────── */}
-      <section
-        className="mt-10 sm:mt-14 pt-6 border-t-2 border-[var(--ink)]"
-        aria-labelledby="invest-fineprint-heading"
-      >
-        <h2
-          id="invest-fineprint-heading"
-          className="bs-display text-[1.5rem] sm:text-[2rem] mb-5"
-          style={{ color: "var(--ink)" }}
-        >
-          <em>Fine print</em></h2>
+        <ReckonerHero />
 
-        <div
-          className="bs-body text-[15px] leading-[1.65] space-y-4 max-w-[62ch]"
-          style={{ color: "var(--ink)" }}
-        >
-          <p>
-            These reckoners use simplified assumptions for illustration.
-            They don&apos;t account for fees, taxes, inflation, or the
-            full shape of market volatility — only the bones of the math.
-          </p>
-          <p>
-            <em>Past performance is not a forecast.</em> The Lookback
-            tells you what was; the other four ask you to assume a future
-            return rate. Reasonable assumptions still produce wide
-            ranges — change a 7% input to 5% and watch what happens.
-          </p>
-          <p>
-            None of this is financial advice. It&apos;s arithmetic, run
-            slowly, on one ETF. Your situation, taxes, and risk tolerance
-            are your own to weigh.
-          </p>
-        </div>
+        <section aria-labelledby="calculators-heading">
+          <h2 id="calculators-heading" className="sr-only">
+            Calculators
+          </h2>
+          <CalculatorTabs
+            history={historyResult}
+            volatilityStats={volatilityStats}
+          />
+        </section>
 
-        <p
-          className="bs-caption italic mt-6 pt-4 border-t border-[var(--color-border)] text-[11px]"
-          style={{ color: "var(--ink-soft)" }}
-        >
-          Source: VEQT historical price data via Yahoo Finance · Updated
-          daily
-        </p>
-      </section>
-    </InteriorShell>
+        <Card>
+          <SectionLabel>The fine print</SectionLabel>
+          <div
+            className="ed-body"
+            style={{
+              marginTop: 14,
+              fontSize: 15,
+              lineHeight: 1.65,
+              color: "var(--ink-soft)",
+              maxWidth: "64ch",
+              display: "flex",
+              flexDirection: "column",
+              gap: "1rem",
+            }}
+          >
+            <p style={{ margin: 0 }}>
+              These reckoners use simplified assumptions for illustration.
+              They don&apos;t account for fees, taxes, inflation, or the
+              full shape of market volatility — only the bones of the math.
+            </p>
+            <p style={{ margin: 0 }}>
+              <em>Past performance is not a forecast.</em> The Lookback tells
+              you what was; the other four ask you to assume a future return
+              rate. Reasonable assumptions still produce wide ranges —
+              change a 7% input to 5% and watch what happens.
+            </p>
+            <p style={{ margin: 0 }}>
+              None of this is financial advice. It&apos;s arithmetic, run
+              slowly, on one ETF. Your situation, taxes, and risk tolerance
+              are your own to weigh.
+            </p>
+          </div>
+          <p
+            className="ed-label"
+            style={{
+              marginTop: 18,
+              paddingTop: 14,
+              borderTop: "1px solid var(--rule-soft)",
+              fontStyle: "italic",
+              fontFamily: "var(--font-serif)",
+              fontSize: 11,
+              letterSpacing: "0.08em",
+              textTransform: "none",
+              color: "var(--ink-mute)",
+            }}
+          >
+            Source: VEQT historical price data via Yahoo Finance · Updated daily
+          </p>
+        </Card>
+      </div>
+    </main>
   );
 }

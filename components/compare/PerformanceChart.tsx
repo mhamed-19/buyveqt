@@ -10,19 +10,27 @@ import {
   Tooltip,
   CartesianGrid,
 } from "recharts";
+import Card from "@/components/ui/Card";
+import SectionHead from "@/components/ui/SectionHead";
+import FundLegend from "./FundLegend";
 import { FUNDS } from "@/data/funds";
 import type { ChartPeriod, DataSourceType } from "@/lib/types";
-import { CHART_PERIODS } from "@/lib/constants";
-import DataFreshness from "@/components/ui/DataFreshness";
-import StaleBanner from "@/components/ui/StaleBanner";
-import DataUnavailable from "@/components/ui/DataUnavailable";
+import { fundColor } from "@/lib/styles";
 import { getCached, setCache } from "@/lib/cache";
 
+export type ComparePeriod = "1Y" | "5Y" | "ALL";
+const PERIOD_KEYS: ComparePeriod[] = ["1Y", "5Y", "ALL"];
+
+const PERIOD_SUBTITLE: Record<ComparePeriod, string> = {
+  "1Y": "Past 12 months, total return",
+  "5Y": "Past 5 years, total return",
+  ALL: "Since the youngest fund’s inception, total return",
+};
+
 interface PerformanceChartProps {
-  selectedFunds: string[];
-  /** Bubble period changes up so The Gap can match. */
-  onPeriodChange?: (period: ChartPeriod) => void;
-  initialPeriod?: ChartPeriod;
+  selected: string[];
+  period: ComparePeriod;
+  onPeriodChange: (p: ComparePeriod) => void;
 }
 
 interface ChartDataPoint {
@@ -41,7 +49,6 @@ interface TooltipPayloadItem {
   value: number;
   color: string;
 }
-
 interface CustomTooltipProps {
   active?: boolean;
   payload?: TooltipPayloadItem[];
@@ -53,16 +60,22 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
   const date = new Date(label + "T00:00:00");
   return (
     <div
-      className="px-3 py-2"
       style={{
-        backgroundColor: "var(--paper)",
-        border: "1px solid var(--ink)",
+        background: "var(--paper-light)",
+        border: "1px solid var(--rule-soft)",
+        borderRadius: 8,
+        padding: "8px 12px",
         boxShadow: "2px 2px 0 var(--ink)",
       }}
     >
       <p
-        className="bs-caption italic text-[11px] mb-1.5"
-        style={{ color: "var(--ink-soft)" }}
+        style={{
+          fontFamily: "var(--font-serif)",
+          fontStyle: "italic",
+          fontSize: 11,
+          color: "var(--ink-mute)",
+          margin: "0 0 6px",
+        }}
       >
         {date.toLocaleDateString("en-CA", {
           year: "numeric",
@@ -73,16 +86,28 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
       {payload.map((p) => (
         <p
           key={p.dataKey}
-          className="flex items-center gap-2 text-sm tabular-nums bs-numerals"
+          className="ed-numerals"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            margin: "2px 0",
+            fontSize: 13,
+          }}
         >
           <span
-            className="w-3 h-[3px]"
-            style={{ backgroundColor: p.color }}
+            aria-hidden
+            style={{
+              width: 12,
+              height: 3,
+              background: p.color,
+              display: "inline-block",
+            }}
           />
-          <span style={{ color: "var(--ink)" }}>
+          <span style={{ color: "var(--ink)", fontWeight: 600 }}>
             {p.dataKey.replace(".TO", "")}
           </span>
-          <span className="ml-auto" style={{ color: "var(--ink)" }}>
+          <span style={{ marginLeft: "auto", color: "var(--ink)" }}>
             {p.value >= 0 ? "+" : ""}
             {p.value.toFixed(2)}%
           </span>
@@ -92,54 +117,50 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
   );
 }
 
+/**
+ * Multi-line normalized-return chart for the /compare page. Period toggle
+ * (1Y / 5Y / ALL) lives in the top-right of the card. Below the chart: a
+ * FundLegend + an italic period subtitle. Lines colored by fund via the
+ * FUND_COLOR map. Powered by Recharts.
+ */
 export default function PerformanceChart({
-  selectedFunds,
+  selected,
+  period,
   onPeriodChange,
-  initialPeriod = "1Y",
 }: PerformanceChartProps) {
-  const [period, setPeriod] = useState<ChartPeriod>(initialPeriod);
   const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
   const [loading, setLoading] = useState(true);
-  const [sources, setSources] = useState<DataSourceType[]>([]);
-  const [fetchedAt, setFetchedAt] = useState<string | null>(null);
-  const [missingFunds, setMissingFunds] = useState<string[]>([]);
-
-  const handlePeriodChange = (next: ChartPeriod) => {
-    setPeriod(next);
-    onPeriodChange?.(next);
-  };
 
   const fetchChartData = useCallback(async () => {
     setLoading(true);
     try {
       const responses: ChartResponse[] = await Promise.all(
-        selectedFunds.map(async (ticker) => {
+        selected.map(async (ticker) => {
           const cacheKey = `chart:${ticker}:${period}`;
           try {
-            const res = await fetch(`/api/funds/chart/${ticker}?range=${period}`);
+            const res = await fetch(
+              `/api/funds/chart/${ticker}?range=${period}`
+            );
             if (!res.ok) throw new Error("API error");
             const json = await res.json();
-            const chartDataArr = json.data as { date: string; close: number }[];
-            setCache(cacheKey, chartDataArr);
+            const arr = json.data as { date: string; close: number }[];
+            setCache(cacheKey, arr);
             return {
               ticker,
-              data: chartDataArr,
+              data: arr,
               source: json.source as DataSourceType | undefined,
             };
           } catch {
-            const cached = getCached<{ date: string; close: number }[]>(cacheKey);
-            return { ticker, data: cached || [], source: "cache" as DataSourceType };
+            const cached = getCached<{ date: string; close: number }[]>(
+              cacheKey
+            );
+            return {
+              ticker,
+              data: cached || [],
+              source: "cache" as DataSourceType,
+            };
           }
         })
-      );
-
-      const allSources = responses
-        .map((r) => r.source)
-        .filter((s): s is DataSourceType => !!s);
-      setSources([...new Set(allSources)]);
-      setFetchedAt(new Date().toISOString());
-      setMissingFunds(
-        responses.filter((r) => r.data.length === 0).map((r) => r.ticker.replace(".TO", ""))
       );
 
       const normalized: Record<string, Record<string, number>> = {};
@@ -161,84 +182,89 @@ export default function PerformanceChart({
         date,
         ...normalized[date],
       }));
-
       setChartData(merged);
     } catch (err) {
       console.error("Failed to fetch chart data:", err);
     } finally {
       setLoading(false);
     }
-  }, [selectedFunds, period]);
+  }, [selected, period]);
 
   useEffect(() => {
     fetchChartData();
   }, [fetchChartData]);
 
-  const hasCached = sources.includes("cache");
-  const displaySource: DataSourceType = hasCached
-    ? "cache"
-    : sources[0] ?? "yahoo-finance";
-  const allUnavailable = !loading && chartData.length === 0;
-
   return (
-    <section
-      className="border-t-2 border-[var(--ink)] pt-5"
-      aria-labelledby="perf-heading"
-    >
-      <header className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-3 mb-4">
-        <div>
-          <p id="perf-heading" className="bs-stamp mb-1">
-            Performance Engraving
-          </p>
-          <h2
-            className="bs-display text-[1.25rem] sm:text-[1.5rem] leading-tight"
-            style={{ color: "var(--ink)" }}
-          >
-            <em>Normalized return</em> from day one of the window
-          </h2>
-        </div>
-
-        {/* Period dispatch — borrowed from the home chart's vocabulary */}
-        <div className="flex flex-wrap gap-x-3 gap-y-1">
-          {CHART_PERIODS.map((p) => {
-            const active = period === p.key;
+    <Card>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "baseline",
+          gap: 12,
+          flexWrap: "wrap",
+        }}
+      >
+        <SectionHead
+          kicker="Performance"
+          title="The chart."
+          size="md"
+          italic={false}
+        />
+        <div style={{ display: "flex", gap: 6 }}>
+          {PERIOD_KEYS.map((p) => {
+            const active = p === period;
             return (
               <button
-                key={p.key}
-                onClick={() => handlePeriodChange(p.key as ChartPeriod)}
-                className="bs-label transition-colors"
-                style={{
-                  color: active ? "var(--stamp)" : "var(--ink-soft)",
-                  borderBottom: active
-                    ? "2px solid var(--stamp)"
-                    : "2px solid transparent",
-                  paddingBottom: "2px",
-                  fontSize: "11px",
-                  letterSpacing: "0.14em",
-                }}
+                key={p}
+                type="button"
+                onClick={() => onPeriodChange(p)}
                 aria-pressed={active}
+                style={{
+                  appearance: "none",
+                  padding: "6px 14px",
+                  borderRadius: 9,
+                  cursor: "pointer",
+                  background: active ? "var(--ink)" : "transparent",
+                  color: active ? "var(--paper-light)" : "var(--ink-soft)",
+                  border: active
+                    ? "1px solid var(--ink)"
+                    : "1px solid var(--rule-soft)",
+                  fontFamily: "var(--font-sans)",
+                  fontSize: 12,
+                  fontWeight: 700,
+                  letterSpacing: "0.04em",
+                }}
               >
-                {p.label}
+                {p}
               </button>
             );
           })}
         </div>
-      </header>
+      </div>
 
-      {hasCached && fetchedAt && (
-        <StaleBanner fetchedAt={fetchedAt} className="mb-3" />
-      )}
-
-      {loading ? (
-        <div className="skeleton h-[300px] w-full" />
-      ) : allUnavailable ? (
-        <DataUnavailable type="chart" className="min-h-[300px]" />
-      ) : (
-        <>
-          <ResponsiveContainer width="100%" height={300}>
+      <div style={{ marginTop: 16, marginLeft: -4 }}>
+        {loading ? (
+          <div className="skeleton" style={{ height: 240, width: "100%" }} />
+        ) : chartData.length === 0 ? (
+          <div
+            style={{
+              height: 240,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontFamily: "var(--font-serif)",
+              fontStyle: "italic",
+              color: "var(--ink-mute)",
+            }}
+          >
+            Chart data unavailable for the selected funds.
+          </div>
+        ) : (
+          <ResponsiveContainer width="100%" height={240}>
             <LineChart
               data={chartData}
-              margin={{ top: 10, right: 8, left: 0, bottom: 0 }}
+              margin={{ top: 8, right: 6, left: 0, bottom: 0 }}
             >
               <CartesianGrid
                 strokeDasharray="2 4"
@@ -248,14 +274,14 @@ export default function PerformanceChart({
               />
               <XAxis
                 dataKey="date"
-                tickFormatter={(d) => {
+                tickFormatter={(d: string) => {
                   const date = new Date(d + "T00:00:00");
                   return date.toLocaleDateString("en-CA", {
                     month: "short",
                     year: "2-digit",
                   });
                 }}
-                tick={{ fontSize: 10.5, fill: "var(--ink-soft)" }}
+                tick={{ fontSize: 10.5, fill: "var(--ink-mute)" }}
                 tickLine={false}
                 axisLine={{ stroke: "var(--ink)", strokeOpacity: 0.4 }}
                 interval="preserveStartEnd"
@@ -265,7 +291,7 @@ export default function PerformanceChart({
                 tickFormatter={(v: number) =>
                   `${v >= 0 ? "+" : ""}${v.toFixed(0)}%`
                 }
-                tick={{ fontSize: 10.5, fill: "var(--ink-soft)" }}
+                tick={{ fontSize: 10.5, fill: "var(--ink-mute)" }}
                 tickLine={false}
                 axisLine={false}
                 width={44}
@@ -279,72 +305,49 @@ export default function PerformanceChart({
                   opacity: 0.4,
                 }}
               />
-              {selectedFunds.map((ticker) => (
-                <Line
-                  key={ticker}
-                  type="monotone"
-                  dataKey={ticker}
-                  stroke={FUNDS[ticker]?.chartColor || "var(--ink)"}
-                  strokeWidth={ticker === "VEQT.TO" ? 2.2 : 1.6}
-                  dot={false}
-                  connectNulls
-                />
-              ))}
+              {selected.map((ticker) => {
+                const short = FUNDS[ticker]?.shortName ?? ticker.replace(".TO", "");
+                return (
+                  <Line
+                    key={ticker}
+                    type="monotone"
+                    dataKey={ticker}
+                    stroke={fundColor(short)}
+                    strokeWidth={ticker === "VEQT.TO" ? 2.4 : 1.8}
+                    dot={false}
+                    connectNulls
+                  />
+                );
+              })}
             </LineChart>
           </ResponsiveContainer>
-
-          {/* Legend strip, broadsheet style */}
-          <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-3">
-            {selectedFunds.map((ticker) => {
-              const fund = FUNDS[ticker];
-              if (!fund) return null;
-              return (
-                <span
-                  key={ticker}
-                  className="flex items-center gap-2 bs-caption text-[11.5px]"
-                  style={{ color: "var(--ink)" }}
-                >
-                  <span
-                    className="inline-block w-4 h-[3px]"
-                    style={{ backgroundColor: fund.chartColor }}
-                    aria-hidden
-                  />
-                  <span className="bs-numerals">{fund.shortName}</span>
-                  <span
-                    className="italic text-[10.5px]"
-                    style={{ color: "var(--ink-soft)" }}
-                  >
-                    {fund.provider}
-                  </span>
-                </span>
-              );
-            })}
-          </div>
-
-          {missingFunds.length > 0 && (
-            <p
-              className="bs-caption italic text-[11.5px] mt-2"
-              style={{ color: "var(--ink-soft)" }}
-            >
-              {missingFunds.join(", ")} data temporarily unavailable.
-            </p>
-          )}
-        </>
-      )}
-
-      {/* Data freshness footer */}
-      <div className="mt-4 pt-3 border-t border-[var(--color-border)]">
-        {!loading && fetchedAt ? (
-          <DataFreshness source={displaySource} fetchedAt={fetchedAt} />
-        ) : (
-          <p
-            className="bs-caption italic text-[11px]"
-            style={{ color: "var(--ink-soft)" }}
-          >
-            Source: Alpha Vantage / Yahoo Finance
-          </p>
         )}
       </div>
-    </section>
+
+      <div
+        style={{
+          marginTop: 14,
+          paddingTop: 14,
+          borderTop: "1px solid var(--rule-soft)",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: 12,
+          flexWrap: "wrap",
+        }}
+      >
+        <FundLegend tickers={selected} />
+        <span
+          style={{
+            fontFamily: "var(--font-serif)",
+            fontStyle: "italic",
+            fontSize: 13,
+            color: "var(--ink-mute)",
+          }}
+        >
+          {PERIOD_SUBTITLE[period]}
+        </span>
+      </div>
+    </Card>
   );
 }

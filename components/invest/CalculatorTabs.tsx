@@ -7,7 +7,7 @@ import DCACalculator from "@/components/calculators/DCACalculator";
 import DividendCalculator from "@/components/calculators/DividendCalculator";
 import TFSARRSPCalculator from "@/components/calculators/TFSARRSPCalculator";
 import FIRECalculator from "@/components/calculators/FIRECalculator";
-import CalculatorFrame from "./CalculatorFrame";
+import CalculatorShell from "./CalculatorShell";
 import PinnedScenariosBar from "./PinnedScenariosBar";
 import type { HistoricalData } from "@/lib/data/types";
 import type { VolatilityStats } from "@/lib/data/volatility";
@@ -15,41 +15,53 @@ import { inferTab } from "@/lib/share-params";
 import type { Handoff } from "@/lib/calculator-handoffs";
 import { usePinnedScenarios, type NewPin } from "@/lib/usePinnedScenarios";
 
-const TABS = [
+interface TabSpec {
+  id: "historical" | "dca" | "dividends" | "tfsa-rrsp" | "fire";
+  /** Pill icon glyph. */
+  icon: string;
+  /** Small-caps tab label. */
+  label: string;
+  /** Fraunces full name displayed under the label. */
+  name: string;
+  /** Subhead surfaced under the active tab. */
+  sub: string;
+}
+
+const TABS: readonly TabSpec[] = [
   {
     id: "historical",
+    icon: "∫",
     label: "Lookback",
-    frameTitle: "What it would have been",
-    frameSubhead:
-      "Backtest against real VEQT history — pick a past date and see what a lump sum or monthly plan would have grown into today.",
+    name: "The Lookback",
+    sub: "If you'd bought $X at launch — what would it be now?",
   },
   {
     id: "dca",
+    icon: "∥",
     label: "DCA",
-    frameTitle: "What steady contributions become",
-    frameSubhead:
-      "Forward projection — set a monthly amount, a horizon, and an assumed return rate, see what it could compound into.",
+    name: "The Drip-Feed",
+    sub: "$X per month, for Y years, at an assumed return rate.",
   },
   {
     id: "dividends",
-    label: "Dividends",
-    frameTitle: "What your stake pays",
-    frameSubhead:
-      "Annual distribution income from a VEQT position, projected at today's yield.",
+    icon: "↻",
+    label: "DRIP",
+    name: "The Reinvestment",
+    sub: "What VEQT's distributions actually add, projected at today's yield.",
   },
   {
     id: "tfsa-rrsp",
-    label: "TFSA / RRSP",
-    frameTitle: "What grows tax-free",
-    frameSubhead:
-      "Project a TFSA or RRSP balance over the long horizon, with VEQT-typical returns.",
+    icon: "☂",
+    label: "Shelter",
+    name: "The Shelter",
+    sub: "TFSA vs RRSP vs taxable — project tax-sheltered growth.",
   },
   {
     id: "fire",
-    label: "FIRE",
-    frameTitle: "When the fund buys you out",
-    frameSubhead:
-      "Your financial independence number, and how many years of saving stand between you and it.",
+    icon: "Ω",
+    label: "Exit",
+    name: "The Exit",
+    sub: "Your financial-independence number, and the years until you reach it.",
   },
 ] as const;
 
@@ -64,17 +76,18 @@ function CalculatorTabsInner({ history, volatilityStats }: CalculatorTabsProps) 
   const searchParams = useSearchParams();
 
   const rawParams: Record<string, string> = {};
-  searchParams.forEach((v, k) => { rawParams[k] = v; });
+  searchParams.forEach((v, k) => {
+    rawParams[k] = v;
+  });
   const urlTab = inferTab(rawParams);
   const initialTab: TabId = TABS.some((t) => t.id === urlTab)
     ? (urlTab as TabId)
     : "historical";
   const [activeTab, setActiveTab] = useState<TabId>(initialTab);
 
-  // Sync activeTab into the URL. We read window.location.search directly
-  // (not searchParams) because useSearchParams doesn't observe
-  // replaceState, so handleHandoff's URL writes would otherwise be
-  // clobbered here. Bail early if the URL already reflects activeTab.
+  // Sync activeTab → URL. Read window.location.search directly because
+  // useSearchParams doesn't observe replaceState, so handoff URL writes
+  // would otherwise be clobbered. Bail early if URL already reflects state.
   useEffect(() => {
     if (typeof window === "undefined") return;
     const current = new URLSearchParams(window.location.search);
@@ -91,10 +104,8 @@ function CalculatorTabsInner({ history, volatilityStats }: CalculatorTabsProps) 
     window.history.replaceState(null, "", newUrl);
   }, [activeTab]);
 
-  // Cross-calc handoff handler — writes the handoff's params to the URL
-  // (so the destination calc reads them on mount via expandParams) and
-  // switches the active tab. Each calc unmounts when its tab changes,
-  // so the destination's mount effect picks up the fresh params cleanly.
+  // Cross-calc handoff: write params + switch tab. Each calc unmounts on
+  // tab change, so the destination's mount effect picks up fresh params.
   const handleHandoff = useCallback((h: Handoff) => {
     if (!TABS.some((t) => t.id === h.tab)) return;
     const sp = new URLSearchParams();
@@ -107,9 +118,6 @@ function CalculatorTabsInner({ history, volatilityStats }: CalculatorTabsProps) 
     setActiveTab(h.tab as TabId);
   }, []);
 
-  // Pinned scenarios — persist across tab switches and reloads. The
-  // hook owns the localStorage round-trip; we just pass the actions
-  // down to each calc + render the compare bar.
   const { scenarios, pin, unpin, clear } = usePinnedScenarios();
 
   const handlePin = useCallback(
@@ -119,115 +127,103 @@ function CalculatorTabsInner({ history, volatilityStats }: CalculatorTabsProps) 
     [pin]
   );
 
-  const activeTabData = TABS.find((t) => t.id === activeTab);
+  const activeTabData = TABS.find((t) => t.id === activeTab) ?? TABS[0];
 
   return (
     <div>
-      {/* Tab bar — broadsheet selector, scrolls horizontally on mobile */}
+      {/* ── Pill row ── */}
       <div
-        className="border-b border-[var(--ink)] mb-2"
+        className="reckoner-pills"
         role="tablist"
         aria-label="Calculator sections"
       >
-        <div
-          className="flex sm:grid sm:grid-cols-5 gap-0 overflow-x-auto hide-scrollbar snap-x snap-mandatory"
-          style={{ WebkitOverflowScrolling: "touch" }}
-        >
-          {TABS.map((tab) => {
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                role="tab"
-                aria-selected={isActive}
-                onClick={() => setActiveTab(tab.id)}
-                title={tab.frameSubhead}
-                className={`
-                  flex items-center justify-center sm:justify-start text-left
-                  px-4 py-3 sm:px-5 sm:py-4 cursor-pointer shrink-0 snap-start min-h-[52px]
-                  border-t-2 transition-colors
-                  ${isActive
-                    ? "border-[var(--stamp)]"
-                    : "border-transparent hover:bg-[var(--color-card-hover)]"}
-                `}
-                style={{
-                  backgroundColor: isActive ? "var(--paper)" : "transparent",
-                }}
+        {TABS.map((tab) => {
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              role="tab"
+              aria-selected={isActive}
+              onClick={() => setActiveTab(tab.id)}
+              title={tab.sub}
+              className="reckoner-pill"
+              data-active={isActive ? "true" : "false"}
+            >
+              <span
+                className="reckoner-pill__icon"
+                data-active={isActive ? "true" : "false"}
+                aria-hidden
               >
+                {tab.icon}
+              </span>
+              <span className="reckoner-pill__copy">
                 <span
-                  className="bs-display text-[15px] sm:text-[17px] leading-none whitespace-nowrap"
+                  className="ed-label"
                   style={{
-                    color: isActive ? "var(--ink)" : "var(--ink-soft)",
+                    color: isActive
+                      ? "rgba(246,239,220,0.55)"
+                      : "var(--ink-mute)",
                   }}
                 >
                   {tab.label}
                 </span>
-              </button>
-            );
-          })}
-        </div>
+                <span
+                  className="ed-display-italic reckoner-pill__name"
+                  style={{
+                    color: isActive ? "var(--paper)" : "var(--ink)",
+                  }}
+                >
+                  {tab.name}
+                </span>
+              </span>
+            </button>
+          );
+        })}
       </div>
 
-      {activeTabData && (
-        <>
-          {/* Active tab subhead — surfaces what the active calc does
-              immediately under the tab row, instead of forcing the user
-              to scroll into the frame to read it. Hover-tooltip on each
-              tab button preview the same line for inactive tabs. */}
-          <p
-            className="bs-caption italic mt-3 mb-2 max-w-[60ch] text-[13px] sm:text-[14px]"
-            style={{ color: "var(--ink-soft)" }}
-          >
-            {activeTabData.frameSubhead}
-          </p>
+      <PinnedScenariosBar
+        scenarios={scenarios}
+        onLoad={handleHandoff}
+        onRemove={unpin}
+        onClear={clear}
+      />
 
-          {/* Compare bar for pinned scenarios — visible across all tabs
-              so the user can pin a DCA scenario, switch to FIRE, and
-              still see the prior numbers. */}
-          <PinnedScenariosBar
-            scenarios={scenarios}
-            onLoad={handleHandoff}
-            onRemove={unpin}
-            onClear={clear}
+      {/* ── Active calc inside the dark shell ── */}
+      <CalculatorShell
+        icon={activeTabData.icon}
+        label={activeTabData.label}
+        name={activeTabData.name}
+        sub={activeTabData.sub}
+      >
+        {activeTab === "historical" && (
+          <InvestCalculator
+            history={history}
+            onHandoff={handleHandoff}
+            onPin={handlePin}
           />
-
-          <CalculatorFrame
-            stamp={activeTabData.label}
-            title={activeTabData.frameTitle}
-          >
-            {activeTab === "historical" && (
-              <InvestCalculator
-                history={history}
-                onHandoff={handleHandoff}
-                onPin={handlePin}
-              />
-            )}
-            {activeTab === "dca" && (
-              <DCACalculator
-                volatilityStats={volatilityStats}
-                onHandoff={handleHandoff}
-                onPin={handlePin}
-              />
-            )}
-            {activeTab === "dividends" && (
-              <DividendCalculator onPin={handlePin} />
-            )}
-            {activeTab === "tfsa-rrsp" && (
-              <TFSARRSPCalculator
-                volatilityStats={volatilityStats}
-                onHandoff={handleHandoff}
-                onPin={handlePin}
-              />
-            )}
-            {activeTab === "fire" && (
-              <FIRECalculator
-                volatilityStats={volatilityStats}
-                onPin={handlePin}
-              />
-            )}
-          </CalculatorFrame>
-        </>
-      )}
+        )}
+        {activeTab === "dca" && (
+          <DCACalculator
+            volatilityStats={volatilityStats}
+            onHandoff={handleHandoff}
+            onPin={handlePin}
+          />
+        )}
+        {activeTab === "dividends" && <DividendCalculator onPin={handlePin} />}
+        {activeTab === "tfsa-rrsp" && (
+          <TFSARRSPCalculator
+            volatilityStats={volatilityStats}
+            onHandoff={handleHandoff}
+            onPin={handlePin}
+          />
+        )}
+        {activeTab === "fire" && (
+          <FIRECalculator
+            volatilityStats={volatilityStats}
+            onPin={handlePin}
+          />
+        )}
+      </CalculatorShell>
     </div>
   );
 }
@@ -236,16 +232,18 @@ export default function CalculatorTabs({ history, volatilityStats }: CalculatorT
   return (
     <Suspense
       fallback={
-        <div className="border-b border-[var(--ink)] mb-2">
-          <div className="flex sm:grid sm:grid-cols-5 gap-0 overflow-x-auto hide-scrollbar">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div
-                key={i}
-                className="skeleton h-[52px] min-w-[120px] shrink-0"
-                style={{ borderRadius: 0 }}
-              />
-            ))}
-          </div>
+        <div
+          className="reckoner-pills"
+          aria-hidden
+          style={{ pointerEvents: "none" }}
+        >
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div
+              key={i}
+              className="skeleton"
+              style={{ height: 72, borderRadius: 16, minWidth: 140 }}
+            />
+          ))}
         </div>
       }
     >

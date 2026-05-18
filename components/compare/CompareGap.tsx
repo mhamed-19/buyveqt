@@ -1,56 +1,72 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Card from "@/components/ui/Card";
+import SectionLabel from "@/components/ui/SectionLabel";
 import { FUNDS } from "@/data/funds";
-import type { ChartPeriod } from "@/lib/types";
+import type { ComparePeriod } from "./PerformanceChart";
 
 interface CompareGapProps {
-  /** Two tickers; if more or fewer, the component renders nothing. */
-  selectedFunds: string[];
-  /** Period must match what PerformanceChart shows; defaults to 1Y. */
-  period?: ChartPeriod;
+  selected: string[];
+  period: ComparePeriod;
 }
 
-interface GapPoint {
-  date: string;
-  spread: number; // % return of fund A minus % return of fund B
+interface GapStats {
+  /** Last spread A − B in pp (positive = A leads). */
+  lastSpread: number;
+  /** Mean of |A − B|. */
+  avgGap: number;
+  /** Best day for fund A (highest daily delta A − B). */
+  bestDayA: number;
+  /** Worst day (most negative daily delta A − B). */
+  worstGap: number;
+  /** Days A out-performed B / total days with both fund returns. */
+  daysAWon: number;
+  totalDays: number;
+}
+
+const PERIOD_LABEL: Record<ComparePeriod, string> = {
+  "1Y": "1Y",
+  "5Y": "5Y",
+  ALL: "ALL",
+};
+
+function fmtPct(n: number, digits = 2): string {
+  if (!Number.isFinite(n)) return "—";
+  const sign = n >= 0 ? "+" : "−";
+  return `${sign}${Math.abs(n).toFixed(digits)}%`;
+}
+
+function fmtPp(n: number, digits = 1): string {
+  if (!Number.isFinite(n)) return "—";
+  const sign = n >= 0 ? "+" : "−";
+  return `${sign}${Math.abs(n).toFixed(digits)} pp`;
 }
 
 /**
- * "The Gap" — when exactly two funds are head-to-head, this strip plots the
- * cumulative-return spread (fund A minus fund B) over the selected period.
- *
- * The line is the same fund A's lead in percentage points over fund B at
- * that date. A vermilion area-fill shows when fund A leads; an ink area-fill
- * shows when fund B leads. The dashed zero-line is the tie. The headline
- * caption tells the story in one numeral: "VEQT leads by +1.8 pp" or
- * "VEQT trails by 0.4 pp".
- *
- * Fund A is whichever ticker appears first in selectedFunds (we keep VEQT
- * pinned to slot 0, so this almost always reads as "VEQT vs other").
+ * "The Gap" card — only renders when exactly two funds are selected. Card
+ * has a vermilion left stripe (Card accent). Inside:
+ *   - Section label "The Gap · 1Y"
+ *   - Italic headline: "XEQT beat VEQT by 0.2 pp." (templated)
+ *   - 4-tile grid: avg daily gap, best day for A, A beat B (X of N), worst gap
  */
-export default function CompareGap({
-  selectedFunds,
-  period = "1Y",
-}: CompareGapProps) {
-  const [gap, setGap] = useState<GapPoint[] | null>(null);
+export default function CompareGap({ selected, period }: CompareGapProps) {
+  const [gap, setGap] = useState<GapStats | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
 
-  const tickerA = selectedFunds[0];
-  const tickerB = selectedFunds[1];
-  const enabled = selectedFunds.length === 2 && !!tickerA && !!tickerB;
+  const tickerA = selected[0];
+  const tickerB = selected[1];
+  const enabled = selected.length === 2 && !!tickerA && !!tickerB;
 
   useEffect(() => {
     if (!enabled) {
       setGap(null);
       return;
     }
-
     let cancelled = false;
     setLoading(true);
     setError(false);
-
     Promise.all([
       fetch(`/api/funds/chart/${tickerA}?range=${period}`).then((r) =>
         r.ok ? r.json() : null
@@ -71,20 +87,56 @@ export default function CompareGap({
         const aBase = a[0].close;
         const bBase = b[0].close;
         const bByDate = new Map(b.map((p) => [p.date, p.close]));
-        const points: GapPoint[] = [];
+
+        const spreads: number[] = [];
         for (const p of a) {
           const bClose = bByDate.get(p.date);
           if (bClose === undefined) continue;
           const aRet = ((p.close - aBase) / aBase) * 100;
           const bRet = ((bClose - bBase) / bBase) * 100;
-          points.push({ date: p.date, spread: aRet - bRet });
+          spreads.push(aRet - bRet);
         }
-        if (points.length < 2) {
+        if (spreads.length < 2) {
           setError(true);
           setLoading(false);
           return;
         }
-        setGap(points);
+
+        // Daily deltas — A's daily move minus B's daily move on the same date
+        const dailyDeltas: number[] = [];
+        let daysAWon = 0;
+        let prev: { aClose: number; bClose: number } | null = null;
+        for (const p of a) {
+          const bClose = bByDate.get(p.date);
+          if (bClose === undefined) continue;
+          if (prev) {
+            const aDay = ((p.close - prev.aClose) / prev.aClose) * 100;
+            const bDay = ((bClose - prev.bClose) / prev.bClose) * 100;
+            const delta = aDay - bDay;
+            dailyDeltas.push(delta);
+            if (delta > 0) daysAWon += 1;
+          }
+          prev = { aClose: p.close, bClose };
+        }
+
+        const avgGap =
+          dailyDeltas.length > 0
+            ? dailyDeltas.reduce((s, x) => s + Math.abs(x), 0) /
+              dailyDeltas.length
+            : 0;
+        const bestDayA =
+          dailyDeltas.length > 0 ? Math.max(...dailyDeltas) : 0;
+        const worstGap =
+          dailyDeltas.length > 0 ? Math.min(...dailyDeltas) : 0;
+
+        setGap({
+          lastSpread: spreads[spreads.length - 1],
+          avgGap,
+          bestDayA,
+          worstGap,
+          daysAWon,
+          totalDays: dailyDeltas.length,
+        });
         setLoading(false);
       })
       .catch(() => {
@@ -98,245 +150,108 @@ export default function CompareGap({
     };
   }, [tickerA, tickerB, period, enabled]);
 
-  // Geometry — recomputed on every render is fine; the data set is small.
-  const geometry = useMemo(() => {
-    if (!gap || gap.length < 2) return null;
-    const W = 800;
-    const H = 140;
-    const PAD_X = 0;
-    const PAD_Y = 14;
-
-    const spreads = gap.map((p) => p.spread);
-    const dataMin = Math.min(...spreads, 0);
-    const dataMax = Math.max(...spreads, 0);
-    // Pad ranges symmetrically so zero stays meaningful
-    const halfRange = Math.max(Math.abs(dataMin), Math.abs(dataMax)) * 1.1 || 1;
-    const min = -halfRange;
-    const max = halfRange;
-
-    const drawableH = H - PAD_Y * 2;
-    const stepX = (W - PAD_X * 2) / (gap.length - 1);
-
-    const yFor = (val: number) =>
-      PAD_Y + (1 - (val - min) / (max - min)) * drawableH;
-    const xFor = (i: number) => PAD_X + i * stepX;
-    const zeroY = yFor(0);
-
-    const coords = gap.map((p, i) => ({ x: xFor(i), y: yFor(p.spread) }));
-
-    // Two area fills: above-zero (A leads, vermilion) and below-zero
-    // (B leads, ink). We draw them as separate paths clipped at the zero
-    // line so the colour swap is crisp.
-    const linePath = coords
-      .map(
-        (c, i) => `${i === 0 ? "M" : "L"}${c.x.toFixed(1)} ${c.y.toFixed(1)}`
-      )
-      .join(" ");
-
-    const areaAbove = `M${coords[0].x.toFixed(1)} ${zeroY.toFixed(1)} ${coords
-      .map((c) => `L${c.x.toFixed(1)} ${c.y.toFixed(1)}`)
-      .join(" ")} L${coords[coords.length - 1].x.toFixed(1)} ${zeroY.toFixed(1)} Z`;
-
-    const lastSpread = spreads[spreads.length - 1];
-    const lastCoord = coords[coords.length - 1];
-
-    return {
-      W,
-      H,
-      linePath,
-      areaAbove,
-      zeroY,
-      lastSpread,
-      lastCoord,
-    };
-  }, [gap]);
-
   if (!enabled) return null;
 
   const fundA = FUNDS[tickerA];
   const fundB = FUNDS[tickerB];
   if (!fundA || !fundB) return null;
 
-  const periodLabel =
-    period === "ALL"
-      ? "since the youngest fund's inception"
-      : period === "YTD"
-      ? "year-to-date"
-      : `over the past ${period.toLowerCase()}`;
+  const shortA = fundA.shortName;
+  const shortB = fundB.shortName;
+  const periodLabel = PERIOD_LABEL[period];
+
+  let headline: string;
+  if (loading) {
+    headline = `${shortA} vs ${shortB}…`;
+  } else if (error || !gap) {
+    headline = `${shortA} × ${shortB}.`;
+  } else {
+    const aLeads = gap.lastSpread >= 0;
+    const winner = aLeads ? shortA : shortB;
+    const loser = aLeads ? shortB : shortA;
+    headline = `${winner} beat ${loser} by ${Math.abs(gap.lastSpread).toFixed(1)} pp.`;
+  }
+
+  const tiles = gap
+    ? [
+        { l: "Avg daily gap", v: fmtPct(gap.avgGap) },
+        { l: `Best day for ${shortA}`, v: fmtPct(gap.bestDayA) },
+        {
+          l: `${shortA} beat ${shortB}`,
+          v: `${gap.daysAWon} / ${gap.totalDays}`,
+        },
+        { l: "Worst gap", v: fmtPp(gap.worstGap) },
+      ]
+    : [
+        { l: "Avg daily gap", v: "—" },
+        { l: `Best day for ${shortA}`, v: "—" },
+        { l: `${shortA} beat ${shortB}`, v: "—" },
+        { l: "Worst gap", v: "—" },
+      ];
 
   return (
-    <section
-      className="border-t-2 border-[var(--ink)] pt-5 pb-6"
-      aria-labelledby="gap-heading"
-    >
-      <header className="flex items-baseline justify-between gap-3 mb-3 flex-wrap">
-        <div>
-          <p id="gap-heading" className="bs-stamp mb-1">
-            The Gap
-          </p>
-          <h3
-            className="bs-display text-[1.25rem] sm:text-[1.5rem] leading-tight"
-            style={{ color: "var(--ink)" }}
-          >
-            {fundA.shortName}
-            <span className="opacity-50 mx-2">·</span>
-            <em>{fundB.shortName}</em>
-            <span
-              className="bs-caption italic font-normal not-italic ml-2"
-              style={{ color: "var(--ink-soft)", fontSize: "0.7em" }}
-            >
-              spread, {periodLabel}
-            </span>
-          </h3>
-        </div>
+    <Card accent style={{ paddingLeft: 23 }}>
+      <SectionLabel>The Gap · {periodLabel}</SectionLabel>
+      <div
+        className="ed-display-italic"
+        style={{
+          fontSize: 26,
+          lineHeight: 1.1,
+          marginTop: 10,
+          letterSpacing: "-0.018em",
+          color: "var(--ink)",
+        }}
+      >
+        {headline}
+      </div>
+      <p
+        style={{
+          fontFamily: "var(--font-serif)",
+          fontSize: 14,
+          lineHeight: 1.55,
+          color: "var(--ink-soft)",
+          margin: "10px 0 0",
+        }}
+      >
+        Daily moves over the period. The headline is the cumulative spread on
+        the last session.
+      </p>
 
-        {geometry && !loading && (
-          <p
-            className="bs-numerals not-italic text-[1.25rem] sm:text-[1.5rem] tabular-nums"
+      <div
+        style={{
+          marginTop: 18,
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: 10,
+        }}
+      >
+        {tiles.map((t) => (
+          <div
+            key={t.l}
             style={{
-              color:
-                geometry.lastSpread >= 0
-                  ? "var(--stamp)"
-                  : "var(--ink)",
+              padding: "10px 12px",
+              background: "var(--paper-warm)",
+              borderRadius: 10,
             }}
           >
-            {geometry.lastSpread >= 0 ? "+" : "−"}
-            {Math.abs(geometry.lastSpread).toFixed(2)}
-            <span
-              className="bs-label text-[10.5px] ml-1"
-              style={{ color: "var(--ink-soft)", letterSpacing: "0.12em" }}
+            <div className="ed-label" style={{ color: "var(--ink-mute)" }}>
+              {t.l}
+            </div>
+            <div
+              className="ed-numerals"
+              style={{
+                fontFamily: "var(--font-display)",
+                fontWeight: 500,
+                fontSize: 18,
+                marginTop: 4,
+                color: "var(--ink)",
+              }}
             >
-              pp
-            </span>
-          </p>
-        )}
-      </header>
-
-      {loading ? (
-        <div className="skeleton h-[140px] w-full" />
-      ) : error || !geometry || !gap ? (
-        <p
-          className="bs-caption italic"
-          style={{ color: "var(--ink-soft)" }}
-        >
-          Spread data unavailable for this matchup.
-        </p>
-      ) : (
-        <>
-          <svg
-            viewBox={`0 0 ${geometry.W} ${geometry.H}`}
-            preserveAspectRatio="none"
-            width="100%"
-            height={140}
-            role="img"
-            aria-label={`${fundA.shortName} minus ${fundB.shortName} cumulative return spread`}
-            style={{ display: "block" }}
-          >
-            <defs>
-              {/* Clip the vermilion fill to above-zero only */}
-              <clipPath id="clip-above">
-                <rect x={0} y={0} width={geometry.W} height={geometry.zeroY} />
-              </clipPath>
-              {/* Clip the ink fill to below-zero only */}
-              <clipPath id="clip-below">
-                <rect
-                  x={0}
-                  y={geometry.zeroY}
-                  width={geometry.W}
-                  height={geometry.H - geometry.zeroY}
-                />
-              </clipPath>
-            </defs>
-
-            {/* Vermilion area for the segments where A leads */}
-            <path
-              d={geometry.areaAbove}
-              fill="var(--stamp)"
-              opacity={0.18}
-              clipPath="url(#clip-above)"
-            />
-            {/* Ink area for segments where B leads */}
-            <path
-              d={geometry.areaAbove}
-              fill="var(--ink)"
-              opacity={0.1}
-              clipPath="url(#clip-below)"
-            />
-
-            {/* Zero line — the tie */}
-            <line
-              x1={0}
-              x2={geometry.W}
-              y1={geometry.zeroY}
-              y2={geometry.zeroY}
-              stroke="var(--ink)"
-              strokeWidth={0.8}
-              strokeDasharray="4 4"
-              opacity={0.45}
-            />
-
-            {/* Spread line itself */}
-            <path
-              d={geometry.linePath}
-              fill="none"
-              stroke="var(--ink)"
-              strokeWidth={1.6}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              opacity={0.92}
-              vectorEffect="non-scaling-stroke"
-            />
-
-            {/* Vermilion dot on today's spread */}
-            <circle
-              cx={geometry.lastCoord.x}
-              cy={geometry.lastCoord.y}
-              r={6}
-              fill="var(--stamp)"
-              opacity={0.18}
-            />
-            <circle
-              cx={geometry.lastCoord.x}
-              cy={geometry.lastCoord.y}
-              r={3}
-              fill="var(--stamp)"
-            />
-          </svg>
-
-          {/* Caption strip — narrative summary */}
-          <p
-            className="bs-caption italic mt-3 text-[12px] sm:text-[12.5px]"
-            style={{ color: "var(--ink-soft)" }}
-          >
-            {geometry.lastSpread >= 0 ? (
-              <>
-                <span
-                  className="bs-numerals not-italic"
-                  style={{ color: "var(--stamp)" }}
-                >
-                  {fundA.shortName}
-                </span>{" "}
-                leads {fundB.shortName} by{" "}
-                <span className="bs-numerals not-italic text-[var(--ink)]">
-                  {Math.abs(geometry.lastSpread).toFixed(2)} pp
-                </span>{" "}
-                {periodLabel}.
-              </>
-            ) : (
-              <>
-                <span className="bs-numerals not-italic text-[var(--ink)]">
-                  {fundA.shortName}
-                </span>{" "}
-                trails {fundB.shortName} by{" "}
-                <span className="bs-numerals not-italic text-[var(--ink)]">
-                  {Math.abs(geometry.lastSpread).toFixed(2)} pp
-                </span>{" "}
-                {periodLabel}.
-              </>
-            )}
-          </p>
-        </>
-      )}
-    </section>
+              {t.v}
+            </div>
+          </div>
+        ))}
+      </div>
+    </Card>
   );
 }

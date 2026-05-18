@@ -3,46 +3,66 @@ import type { ReactNode } from "react";
 interface PullquoteProps {
   children: ReactNode;
   attribution?: string;
-  /** Optional float alignment on wide screens. Default renders full-width. */
+  /** Legacy prop (Round 3 broadsheet). Ignored by the Round 4 layout —
+   *  the new pull-quote is always left-borderened full-width. Kept so
+   *  existing MDX <Pullquote align="…"> calls don't error. */
   align?: "center" | "left" | "right";
 }
 
 /**
- * Editorial pull quote. Breaks up long prose with a wide-column moment.
- *
- *   <Pullquote attribution="— The Hold Line">
- *     Time in the market beats timing the market.
- *   </Pullquote>
- *
- * Lives in components/mdx so it can be imported into the MDX renderer map.
- * Styled to the broadsheet palette via var(--ink), var(--stamp), etc.
+ * Round 4 pull-quote: paper-light card with a 3px vermilion left rule,
+ * Fraunces italic body, oversized vermilion opening quotation mark.
+ * Replaces the broadsheet-era variant — name kept (lowercase `q`) so
+ * existing MDX content keeps rendering without edits.
  */
-export function Pullquote({
-  children,
-  attribution,
-  align = "center",
-}: PullquoteProps) {
-  const alignment =
-    align === "left"
-      ? "text-left ml-0 mr-auto"
-      : align === "right"
-        ? "text-right ml-auto mr-0"
-        : "text-center mx-auto";
-
+export function Pullquote({ children, attribution }: PullquoteProps) {
   return (
     <figure
-      className={`my-10 sm:my-12 max-w-[44ch] ${alignment}`}
-      style={{ color: "var(--ink)" }}
+      style={{
+        margin: "32px 0",
+        padding: "24px 22px",
+        background: "var(--paper-light)",
+        borderLeft: "3px solid var(--stamp)",
+      }}
     >
       <blockquote
-        className="bs-display-italic text-[1.75rem] sm:text-[2.25rem] leading-[1.05]"
-        style={{ color: "var(--ink)" }}
+        style={{
+          fontFamily: "var(--font-display)",
+          fontWeight: 500,
+          fontStyle: "italic",
+          fontSize: "clamp(1.25rem, 2.2vw, 1.5rem)",
+          lineHeight: 1.25,
+          letterSpacing: "-0.01em",
+          color: "var(--ink)",
+          margin: 0,
+        }}
       >
+        <span
+          aria-hidden
+          style={{
+            color: "var(--stamp)",
+            fontWeight: 700,
+            fontSize: "1.6em",
+            lineHeight: 0,
+            marginRight: 6,
+            verticalAlign: "-0.18em",
+          }}
+        >
+          “
+        </span>
         {children}
       </blockquote>
       {attribution && (
-        <figcaption className="bs-label mt-4">{attribution}</figcaption>
+        <figcaption
+          className="ed-label"
+          style={{ marginTop: 12 }}
+        >
+          {attribution}
+        </figcaption>
       )}
     </figure>
   );
 }
+
+/** PascalCase alias, in case MDX authors use <PullQuote>. */
+export const PullQuote = Pullquote;

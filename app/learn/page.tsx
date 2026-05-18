@@ -1,14 +1,15 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import InteriorShell from "@/components/broadsheet/InteriorShell";
-import { getAllArticles } from "@/lib/articles";
+import { getAllArticles, type ArticleFrontmatter } from "@/lib/articles";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { buildBreadcrumbSchema, canonicalUrl } from "@/lib/seo-config";
-import LearnContent from "@/components/learn/LearnContent";
+import LearnHero from "@/components/learn/LearnHero";
+import CourseHero from "@/components/learn/CourseHero";
+import ArticleList from "@/components/learn/ArticleList";
 
 export function generateMetadata(): Metadata {
   const count = getAllArticles().length;
-  const description = `${count} dispatches on VEQT, Canadian ETFs, tax-advantaged accounts, and building a passive portfolio. Written in plain English for real investors.`;
+  const description = `${count} articles on VEQT, Canadian ETFs, tax-advantaged accounts, and building a passive portfolio. Written in plain English for real investors.`;
   return {
     title: "Learn — VEQT & Canadian Passive Investing",
     description,
@@ -22,12 +23,36 @@ export function generateMetadata(): Metadata {
   };
 }
 
+/** Course One reading order — three foundational articles. The article
+ *  cards in the dark hero link out to these slugs (validated below by
+ *  filtering against the real article list). */
+const COURSE_ONE_SLUGS = [
+  "what-is-veqt",
+  "veqt-vs-diy-portfolio",
+  "veqt-is-down",
+];
+
 export default function LearnPage() {
   const all = getAllArticles();
-  const count = all.length;
+
+  // Resolve the course-one slugs to real articles (skip silently if any
+  // ever goes missing — the hero just shrinks).
+  const courseSteps: ArticleFrontmatter[] = COURSE_ONE_SLUGS
+    .map((slug) => all.find((a) => a.slug === slug))
+    .filter((a): a is ArticleFrontmatter => !!a);
+
+  // Everything not in course one becomes the archive list.
+  const courseSet = new Set(courseSteps.map((a) => a.slug));
+  const archive = all.filter((a) => !courseSet.has(a.slug));
 
   return (
-    <InteriorShell>
+    <main
+      style={{
+        background: "var(--paper)",
+        color: "var(--ink)",
+        minHeight: "100dvh",
+      }}
+    >
       <JsonLd
         data={buildBreadcrumbSchema([
           { name: "Home", path: "/" },
@@ -35,26 +60,33 @@ export default function LearnPage() {
         ])}
       />
 
-      <section className="pt-8 pb-4">
-        <p className="bs-stamp mb-3">The Archive</p>
-        <h1
-          className="bs-display text-[2.5rem] sm:text-[3.5rem] lg:text-[4.5rem] leading-[0.95]"
-          style={{ color: "var(--ink)" }}
-        >
-          Learn.
-        </h1>
-        <p
-          className="bs-body italic mt-3 max-w-[54ch] text-[1rem] sm:text-[1.0625rem]"
-          style={{ color: "var(--ink-soft)" }}
-        >
-          {count} dispatches on VEQT and Canadian passive investing. Pick a
-          path, or browse the archive.
-        </p>
-      </section>
+      <div className="learn-stack">
+        <LearnHero articleCount={all.length} />
+        <CourseHero steps={courseSteps} />
 
-      <Suspense fallback={null}>
-        <LearnContent articles={all} />
-      </Suspense>
-    </InteriorShell>
+        <section>
+          <Suspense fallback={null}>
+            <ArticleList articles={archive} />
+          </Suspense>
+        </section>
+      </div>
+
+      <style>{`
+        .learn-stack {
+          display: flex;
+          flex-direction: column;
+          gap: 26px;
+          max-width: 1280px;
+          margin: 0 auto;
+          padding: 20px 16px 56px;
+        }
+        @media (min-width: 1024px) {
+          .learn-stack {
+            gap: 36px;
+            padding: 40px 40px 72px;
+          }
+        }
+      `}</style>
+    </main>
   );
 }

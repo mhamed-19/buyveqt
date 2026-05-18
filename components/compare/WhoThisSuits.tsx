@@ -3,7 +3,7 @@
 import { FUNDS } from "@/data/funds";
 
 interface WhoThisSuitsProps {
-  selectedFunds: string[];
+  selected: string[];
 }
 
 /**
@@ -12,7 +12,7 @@ interface WhoThisSuitsProps {
  * dispatch number, a display-italic name, the provider as italic caption,
  * and the curated "who this suits" body in the broadsheet body face.
  */
-export default function WhoThisSuits({ selectedFunds }: WhoThisSuitsProps) {
+export default function WhoThisSuits({ selected }: WhoThisSuitsProps) {
   return (
     <section
       className="border-t-2 border-[var(--ink)] pt-5"
@@ -31,7 +31,7 @@ export default function WhoThisSuits({ selectedFunds }: WhoThisSuitsProps) {
       </header>
 
       <ol className="space-y-0">
-        {selectedFunds.map((ticker, idx) => {
+        {selected.map((ticker, idx) => {
           const fund = FUNDS[ticker];
           if (!fund) return null;
           const isVeqt = ticker === "VEQT.TO";
