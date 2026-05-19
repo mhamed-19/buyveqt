@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useContainerWidth } from "@/lib/useContainerWidth";
 
 interface WeightingComparisonProps {
   compact?: boolean;
 }
 
 type Slice = { name: string; pct: number; color: string; sub: string };
+
+const COMPACT_THRESHOLD = 600;
 
 const VEQT_SLICES: Slice[] = [
   { name: "US", pct: 43, color: "var(--stamp)", sub: "follows market" },
@@ -35,10 +37,16 @@ function Donut({
 }) {
   const cx = size;
   const cy = size;
-  const r = size * 0.71;
+  const r = size * 0.74;
   let acc = -90;
   return (
-    <svg width={size * 2} height={size * 2} viewBox={`0 0 ${size * 2} ${size * 2}`} aria-hidden>
+    <svg
+      width={size * 2}
+      height={size * 2}
+      viewBox={`0 0 ${size * 2} ${size * 2}`}
+      style={{ flexShrink: 0 }}
+      aria-hidden
+    >
       {slices.map((s) => {
         const start = acc;
         const end = acc + (s.pct / 100) * 360;
@@ -60,13 +68,13 @@ function Donut({
           />
         );
       })}
-      <circle cx={cx} cy={cy} r={r * 0.52} fill="var(--paper-light)" />
+      <circle cx={cx} cy={cy} r={r * 0.55} fill="var(--paper-light)" />
       <text
         x={cx}
         y={cy - 4}
         textAnchor="middle"
         fontFamily="var(--font-sans)"
-        fontSize="9.5"
+        fontSize="10"
         fontWeight={700}
         letterSpacing="0.22em"
         fill="var(--ink-mute)"
@@ -75,11 +83,11 @@ function Donut({
       </text>
       <text
         x={cx}
-        y={cy + 10}
+        y={cy + 12}
         textAnchor="middle"
         fontFamily="var(--font-serif)"
         fontStyle="italic"
-        fontSize="11"
+        fontSize="13"
         fill="var(--ink)"
       >
         {sub}
@@ -90,33 +98,34 @@ function Donut({
 
 function Legend({ slices }: { slices: Slice[] }) {
   return (
-    <div style={{ display: "flex", flexDirection: "column" }}>
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "auto auto auto 1fr",
+        columnGap: 8,
+        rowGap: 4,
+        alignItems: "baseline",
+      }}
+    >
       {slices.map((s) => (
         <div
           key={s.name}
-          style={{
-            display: "flex",
-            alignItems: "baseline",
-            gap: 8,
-            padding: "3px 0",
-          }}
+          style={{ display: "contents" }}
         >
           <span
             style={{
-              width: 8,
-              height: 8,
+              width: 9,
+              height: 9,
               background: s.color,
-              flexShrink: 0,
               alignSelf: "center",
             }}
           />
           <span
             style={{
               fontFamily: "var(--font-sans)",
-              fontSize: 11,
+              fontSize: 11.5,
               fontWeight: 700,
               letterSpacing: "0.06em",
-              width: 50,
               color: "var(--ink)",
             }}
           >
@@ -126,7 +135,7 @@ function Legend({ slices }: { slices: Slice[] }) {
             style={{
               fontFamily: "var(--font-display)",
               fontWeight: 500,
-              fontSize: 16,
+              fontSize: 17,
               fontVariantNumeric: "tabular-nums",
               color: "var(--ink)",
             }}
@@ -137,9 +146,8 @@ function Legend({ slices }: { slices: Slice[] }) {
             style={{
               fontFamily: "var(--font-serif)",
               fontStyle: "italic",
-              fontSize: 11,
+              fontSize: 12.5,
               color: "var(--ink-mute)",
-              marginLeft: 6,
             }}
           >
             {s.sub}
@@ -151,20 +159,14 @@ function Legend({ slices }: { slices: Slice[] }) {
 }
 
 export function WeightingComparison({ compact }: WeightingComparisonProps = {}) {
-  const [isMobile, setIsMobile] = useState(false);
-  useEffect(() => {
-    const mq = window.matchMedia("(max-width: 640px)");
-    const update = () => setIsMobile(mq.matches);
-    update();
-    mq.addEventListener("change", update);
-    return () => mq.removeEventListener("change", update);
-  }, []);
-  const mobile = compact ?? isMobile;
-  const donutSize = mobile ? 60 : 78;
+  const { ref, width } = useContainerWidth<HTMLDivElement>();
+  const auto = width > 0 && width < COMPACT_THRESHOLD;
+  const mobile = compact ?? auto;
+  const donutSize = mobile ? 68 : 82;
 
   return (
-    <div className="my-10" style={{ fontFamily: "var(--font-sans)" }}>
-      <div style={{ marginBottom: 22 }}>
+    <div ref={ref} className="flagship-bleed my-10" style={{ fontFamily: "var(--font-sans)" }}>
+      <div style={{ marginBottom: 24 }}>
         <p className="ed-label" style={{ margin: 0 }}>
           Two ways to slice the world
         </p>
@@ -173,10 +175,10 @@ export function WeightingComparison({ compact }: WeightingComparisonProps = {}) 
             fontFamily: "var(--font-display)",
             fontWeight: 500,
             fontStyle: "italic",
-            fontSize: mobile ? 24 : 32,
+            fontSize: mobile ? "clamp(22px, 6vw, 26px)" : "clamp(28px, 3.4vw, 34px)",
             lineHeight: 1.05,
             letterSpacing: "-0.018em",
-            margin: "8px 0 0",
+            margin: "10px 0 0",
             color: "var(--ink)",
           }}
         >
@@ -193,7 +195,6 @@ export function WeightingComparison({ compact }: WeightingComparisonProps = {}) 
           border: "1px solid var(--ink)",
         }}
       >
-        {/* VEQT */}
         <div
           style={{
             padding: mobile ? "28px 22px" : "32px 32px",
@@ -216,7 +217,7 @@ export function WeightingComparison({ compact }: WeightingComparisonProps = {}) 
             style={{
               display: "flex",
               alignItems: "center",
-              gap: 18,
+              gap: 22,
               flexWrap: "wrap",
             }}
           >
@@ -226,10 +227,10 @@ export function WeightingComparison({ compact }: WeightingComparisonProps = {}) 
           <p
             style={{
               fontFamily: "var(--font-serif)",
-              fontSize: 13.5,
+              fontSize: 15.5,
               lineHeight: 1.6,
               color: "var(--ink-soft)",
-              marginTop: 18,
+              marginTop: 20,
               marginBottom: 0,
             }}
           >
@@ -248,18 +249,17 @@ export function WeightingComparison({ compact }: WeightingComparisonProps = {}) 
           </p>
         </div>
 
-        {/* XEQT */}
         <div
           style={{
             padding: mobile ? "28px 22px" : "32px 32px",
-            background: "color-mix(in oklab, var(--ink) 3%, transparent)",
+            background: "color-mix(in oklab, var(--ink) 4%, transparent)",
           }}
         >
           <div
             style={{
               display: "flex",
               alignItems: "center",
-              gap: 18,
+              gap: 22,
               flexWrap: "wrap",
             }}
           >
@@ -269,10 +269,10 @@ export function WeightingComparison({ compact }: WeightingComparisonProps = {}) 
           <p
             style={{
               fontFamily: "var(--font-serif)",
-              fontSize: 13.5,
+              fontSize: 15.5,
               lineHeight: 1.6,
               color: "var(--ink-soft)",
-              marginTop: 18,
+              marginTop: 20,
               marginBottom: 0,
             }}
           >

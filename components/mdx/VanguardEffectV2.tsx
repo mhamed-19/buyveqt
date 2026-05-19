@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useContainerWidth } from "@/lib/useContainerWidth";
 
 interface VanguardEffectV2Props {
   compact?: boolean;
@@ -15,6 +15,8 @@ type EffectEvent = {
   follow?: boolean;
 };
 
+const COMPACT_THRESHOLD = 600;
+
 const EVENTS: EffectEvent[] = [
   { year: 2018, label: "VEQT, VGRO, VBAL, VCNS launched", actor: "Vanguard", mer: 0.25, marquee: true },
   { year: 2019, label: "XEQT launches at 0.20%", actor: "BlackRock", mer: 0.20 },
@@ -25,19 +27,15 @@ const EVENTS: EffectEvent[] = [
 ];
 
 export function VanguardEffectV2({ compact }: VanguardEffectV2Props = {}) {
-  const [isMobile, setIsMobile] = useState(false);
-  useEffect(() => {
-    const mq = window.matchMedia("(max-width: 640px)");
-    const update = () => setIsMobile(mq.matches);
-    update();
-    mq.addEventListener("change", update);
-    return () => mq.removeEventListener("change", update);
-  }, []);
-  const mobile = compact ?? isMobile;
+  const { ref, width } = useContainerWidth<HTMLDivElement>();
+  const auto = width > 0 && width < COMPACT_THRESHOLD;
+  const mobile = compact ?? auto;
+
+  const gridCols = mobile ? "62px 1fr 78px" : "78px 1fr 100px";
 
   return (
-    <div className="my-10" style={{ fontFamily: "var(--font-sans)" }}>
-      <div style={{ marginBottom: 22 }}>
+    <div ref={ref} className="flagship-bleed my-10" style={{ fontFamily: "var(--font-sans)" }}>
+      <div style={{ marginBottom: 24 }}>
         <p className="ed-label" style={{ margin: 0 }}>
           The Vanguard Effect · who moves first
         </p>
@@ -46,10 +44,10 @@ export function VanguardEffectV2({ compact }: VanguardEffectV2Props = {}) {
             fontFamily: "var(--font-display)",
             fontWeight: 500,
             fontStyle: "italic",
-            fontSize: mobile ? 24 : 32,
+            fontSize: mobile ? "clamp(22px, 6vw, 26px)" : "clamp(28px, 3.4vw, 34px)",
             lineHeight: 1.05,
             letterSpacing: "-0.018em",
-            margin: "8px 0 0",
+            margin: "10px 0 0",
             color: "var(--ink)",
           }}
         >
@@ -61,21 +59,21 @@ export function VanguardEffectV2({ compact }: VanguardEffectV2Props = {}) {
         style={{
           background: "var(--paper-light)",
           border: "1px solid var(--ink)",
-          padding: mobile ? "20px 0" : "26px 0",
+          padding: mobile ? "22px 0" : "28px 0",
         }}
       >
         <div
           style={{
             padding: mobile ? "0 22px" : "0 32px",
             display: "grid",
-            gridTemplateColumns: "70px 1fr 90px",
+            gridTemplateColumns: gridCols,
             gap: 14,
-            marginBottom: 14,
+            marginBottom: 12,
           }}
         >
-          <span className="ed-label" style={{ margin: 0, fontSize: 9.5 }}>Year</span>
-          <span className="ed-label" style={{ margin: 0, fontSize: 9.5 }}>What happened</span>
-          <span className="ed-label" style={{ margin: 0, fontSize: 9.5, textAlign: "right" }}>MER</span>
+          <span className="ed-label" style={{ margin: 0, fontSize: 10 }}>Year</span>
+          <span className="ed-label" style={{ margin: 0, fontSize: 10 }}>What happened</span>
+          <span className="ed-label" style={{ margin: 0, fontSize: 10, textAlign: "right" }}>MER</span>
         </div>
 
         {EVENTS.map((e, i) => {
@@ -84,14 +82,14 @@ export function VanguardEffectV2({ compact }: VanguardEffectV2Props = {}) {
             <div
               key={`${e.year}-${i}`}
               style={{
-                padding: mobile ? "14px 22px" : "18px 32px",
+                padding: mobile ? "16px 22px" : "20px 32px",
                 borderTop: "1px solid var(--rule-soft)",
                 display: "grid",
-                gridTemplateColumns: "70px 1fr 90px",
+                gridTemplateColumns: gridCols,
                 gap: 14,
                 alignItems: "center",
                 background: e.marquee
-                  ? "color-mix(in oklab, var(--stamp) 5%, transparent)"
+                  ? "color-mix(in oklab, var(--stamp) 6%, transparent)"
                   : "transparent",
                 position: "relative",
               }}
@@ -113,10 +111,11 @@ export function VanguardEffectV2({ compact }: VanguardEffectV2Props = {}) {
                 style={{
                   fontFamily: "var(--font-display)",
                   fontWeight: 500,
-                  fontSize: 22,
+                  fontSize: mobile ? 20 : 24,
                   fontVariantNumeric: "tabular-nums",
                   color: isVanguard ? "var(--stamp)" : "var(--ink)",
                   letterSpacing: "-0.012em",
+                  lineHeight: 1,
                 }}
               >
                 {e.year}
@@ -126,8 +125,8 @@ export function VanguardEffectV2({ compact }: VanguardEffectV2Props = {}) {
                   style={{
                     fontFamily: "var(--font-display)",
                     fontWeight: 500,
-                    fontSize: 15,
-                    lineHeight: 1.2,
+                    fontSize: mobile ? 15.5 : 17,
+                    lineHeight: 1.25,
                     color: "var(--ink)",
                   }}
                 >
@@ -135,7 +134,7 @@ export function VanguardEffectV2({ compact }: VanguardEffectV2Props = {}) {
                 </div>
                 <div
                   style={{
-                    marginTop: 4,
+                    marginTop: 6,
                     fontFamily: "var(--font-sans)",
                     fontSize: 10,
                     fontWeight: 700,
@@ -159,7 +158,7 @@ export function VanguardEffectV2({ compact }: VanguardEffectV2Props = {}) {
                 style={{
                   fontFamily: "var(--font-display)",
                   fontWeight: 500,
-                  fontSize: 18,
+                  fontSize: mobile ? 17 : 20,
                   fontVariantNumeric: "tabular-nums",
                   textAlign: "right",
                   color: "var(--ink)",
@@ -173,7 +172,7 @@ export function VanguardEffectV2({ compact }: VanguardEffectV2Props = {}) {
 
         <div
           style={{
-            padding: mobile ? "20px 22px 6px" : "24px 32px 8px",
+            padding: mobile ? "22px 22px 8px" : "26px 32px 10px",
             borderTop: "2px solid var(--ink)",
             marginTop: 0,
           }}
@@ -181,7 +180,7 @@ export function VanguardEffectV2({ compact }: VanguardEffectV2Props = {}) {
           <p
             style={{
               fontFamily: "var(--font-serif)",
-              fontSize: 14.5,
+              fontSize: 15.5,
               lineHeight: 1.6,
               color: "var(--ink-soft)",
               margin: 0,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useContainerWidth } from "@/lib/useContainerWidth";
 
 interface PioneerTimelineProps {
   compact?: boolean;
@@ -12,6 +12,8 @@ type Milestone = {
   text: string;
   stamp?: boolean;
 };
+
+const COMPACT_THRESHOLD = 600;
 
 const MILESTONES: Milestone[] = [
   {
@@ -52,19 +54,13 @@ const MILESTONES: Milestone[] = [
 const YEAR_TICKS = ["1975", "1985", "1995", "2009", "2018", "today"];
 
 export function PioneerTimeline({ compact }: PioneerTimelineProps = {}) {
-  const [isMobile, setIsMobile] = useState(false);
-  useEffect(() => {
-    const mq = window.matchMedia("(max-width: 640px)");
-    const update = () => setIsMobile(mq.matches);
-    update();
-    mq.addEventListener("change", update);
-    return () => mq.removeEventListener("change", update);
-  }, []);
-  const mobile = compact ?? isMobile;
+  const { ref, width } = useContainerWidth<HTMLDivElement>();
+  const auto = width > 0 && width < COMPACT_THRESHOLD;
+  const mobile = compact ?? auto;
 
   return (
-    <div className="my-10" style={{ fontFamily: "var(--font-sans)" }}>
-      <div style={{ marginBottom: 22 }}>
+    <div ref={ref} className="flagship-bleed my-10" style={{ fontFamily: "var(--font-sans)" }}>
+      <div style={{ marginBottom: 24 }}>
         <p className="ed-label" style={{ margin: 0 }}>
           Pioneer vs Fast-Follower · fifty years of index investing
         </p>
@@ -73,10 +69,10 @@ export function PioneerTimeline({ compact }: PioneerTimelineProps = {}) {
             fontFamily: "var(--font-display)",
             fontWeight: 500,
             fontStyle: "italic",
-            fontSize: mobile ? 24 : 32,
+            fontSize: mobile ? "clamp(22px, 6vw, 26px)" : "clamp(28px, 3.4vw, 34px)",
             lineHeight: 1.05,
             letterSpacing: "-0.018em",
-            margin: "8px 0 0",
+            margin: "10px 0 0",
             color: "var(--ink)",
           }}
         >
@@ -88,11 +84,10 @@ export function PioneerTimeline({ compact }: PioneerTimelineProps = {}) {
         style={{
           background: "var(--paper-light)",
           border: "1px solid var(--ink)",
-          padding: mobile ? "24px 22px" : "32px 36px",
+          padding: mobile ? "26px 22px" : "34px 36px",
         }}
       >
-        {/* Stacked band timeline */}
-        <div style={{ position: "relative", paddingTop: 50, paddingBottom: 50, marginBottom: 22 }}>
+        <div style={{ position: "relative", paddingTop: 44, paddingBottom: 44, marginBottom: 26 }}>
           <div
             style={{
               position: "absolute",
@@ -103,10 +98,10 @@ export function PioneerTimeline({ compact }: PioneerTimelineProps = {}) {
               background: "var(--stamp)",
               display: "flex",
               alignItems: "center",
-              paddingLeft: 12,
+              paddingLeft: 14,
               color: "#f6efdc",
               fontFamily: "var(--font-sans)",
-              fontSize: 10,
+              fontSize: 10.5,
               fontWeight: 700,
               letterSpacing: "0.22em",
               textTransform: "uppercase",
@@ -117,7 +112,7 @@ export function PioneerTimeline({ compact }: PioneerTimelineProps = {}) {
 
           <div
             style={{
-              height: 40,
+              height: 42,
               display: "grid",
               gridTemplateColumns: `repeat(${YEAR_TICKS.length}, 1fr)`,
               borderTop: "1px solid var(--ink)",
@@ -126,7 +121,7 @@ export function PioneerTimeline({ compact }: PioneerTimelineProps = {}) {
               alignItems: "center",
               fontFamily: "var(--font-display)",
               fontWeight: 500,
-              fontSize: 14,
+              fontSize: mobile ? 13 : 15,
               fontVariantNumeric: "tabular-nums",
               color: "var(--ink)",
               textAlign: "center",
@@ -157,10 +152,10 @@ export function PioneerTimeline({ compact }: PioneerTimelineProps = {}) {
               background: "#0f0d0a",
               display: "flex",
               alignItems: "center",
-              paddingLeft: 12,
+              paddingLeft: 14,
               color: "#f6efdc",
               fontFamily: "var(--font-sans)",
-              fontSize: 10,
+              fontSize: 10.5,
               fontWeight: 700,
               letterSpacing: "0.22em",
               textTransform: "uppercase",
@@ -174,7 +169,7 @@ export function PioneerTimeline({ compact }: PioneerTimelineProps = {}) {
           style={{
             display: "grid",
             gridTemplateColumns: mobile ? "1fr" : "repeat(2, 1fr)",
-            gap: mobile ? 14 : 18,
+            gap: mobile ? 14 : 20,
             marginTop: 4,
           }}
         >
@@ -182,19 +177,19 @@ export function PioneerTimeline({ compact }: PioneerTimelineProps = {}) {
             <div
               key={`${m.year}-${m.text.slice(0, 24)}`}
               style={{
-                padding: "12px 14px",
+                padding: "14px 16px",
                 borderLeft: `3px solid ${m.stamp ? "var(--stamp)" : "var(--ink)"}`,
                 background: m.stamp
-                  ? "color-mix(in oklab, var(--stamp) 6%, transparent)"
+                  ? "color-mix(in oklab, var(--stamp) 7%, transparent)"
                   : "transparent",
               }}
             >
-              <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
                 <span
                   style={{
                     fontFamily: "var(--font-display)",
                     fontWeight: 500,
-                    fontSize: 18,
+                    fontSize: 20,
                     fontVariantNumeric: "tabular-nums",
                     color: m.stamp ? "var(--stamp)" : "var(--ink)",
                   }}
@@ -204,7 +199,7 @@ export function PioneerTimeline({ compact }: PioneerTimelineProps = {}) {
                 <span
                   style={{
                     fontFamily: "var(--font-sans)",
-                    fontSize: 9.5,
+                    fontSize: 10,
                     fontWeight: 700,
                     letterSpacing: "0.18em",
                     textTransform: "uppercase",
@@ -217,10 +212,10 @@ export function PioneerTimeline({ compact }: PioneerTimelineProps = {}) {
               <p
                 style={{
                   fontFamily: "var(--font-serif)",
-                  fontSize: 13.5,
+                  fontSize: 15,
                   lineHeight: 1.5,
                   color: "var(--ink-soft)",
-                  marginTop: 6,
+                  marginTop: 8,
                   marginBottom: 0,
                 }}
               >
@@ -234,10 +229,10 @@ export function PioneerTimeline({ compact }: PioneerTimelineProps = {}) {
           style={{
             fontFamily: "var(--font-serif)",
             fontStyle: "italic",
-            fontSize: 14,
+            fontSize: 15.5,
             lineHeight: 1.6,
             color: "var(--ink-mute)",
-            marginTop: 22,
+            marginTop: 24,
             marginBottom: 0,
             maxWidth: "64ch",
           }}

@@ -11,9 +11,9 @@ interface VerdictCardProps {
 
 /**
  * Dark verdict block for the flagship article. Children render as the
- * closing prose (one or more <p> nodes from MDX). The inline custom-prop
- * overrides recolor inherited `.prose-custom p` text to paper-cream so the
- * MDX paragraphs read on the dark ink background.
+ * closing prose (one or more MDX paragraphs). The inline custom-prop
+ * overrides recolor the inherited `.learn-article p` color to paper-cream
+ * so the MDX paragraphs read against the dark ink background.
  */
 export function VerdictCard({
   pill = "The bottom line",
@@ -23,24 +23,27 @@ export function VerdictCard({
   const proseOverrides: CSSProperties = {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     ...({
-      "--color-text-secondary": "rgba(246, 239, 220, 0.85)",
+      "--ink": "#f6efdc",
+      "--ink-soft": "rgba(246, 239, 220, 0.86)",
+      "--ink-mute": "rgba(246, 239, 220, 0.6)",
+      "--color-text-secondary": "rgba(246, 239, 220, 0.86)",
       "--color-text-primary": "#f6efdc",
-      "--color-text-muted": "rgba(246, 239, 220, 0.55)",
+      "--color-text-muted": "rgba(246, 239, 220, 0.6)",
       "--color-brand": "var(--stamp)",
       "--color-brand-dark": "var(--stamp)",
-      color: "rgba(246, 239, 220, 0.85)",
+      color: "rgba(246, 239, 220, 0.86)",
     } as CSSProperties),
   };
 
   return (
-    <div className="my-10">
+    <div className="flagship-bleed my-12">
       <Card dark padding={0}>
-        <div style={{ padding: "32px 32px 28px" }}>
+        <div style={{ padding: "clamp(28px, 4vw, 44px) clamp(24px, 4vw, 44px)" }}>
           <span
             style={{
               display: "inline-block",
-              marginBottom: 16,
-              padding: "4px 12px",
+              marginBottom: 18,
+              padding: "5px 12px",
               background: "var(--stamp)",
               fontFamily: "var(--font-sans)",
               fontSize: 11,
@@ -58,11 +61,11 @@ export function VerdictCard({
               fontFamily: "var(--font-display)",
               fontWeight: 500,
               fontStyle: "italic",
-              fontSize: "clamp(1.75rem, 4vw, 2.625rem)",
+              fontSize: "clamp(2rem, 5vw, 3rem)",
               lineHeight: 1.05,
               color: "#f6efdc",
               letterSpacing: "-0.022em",
-              maxWidth: "20ch",
+              maxWidth: "18ch",
               margin: 0,
             }}
           >
@@ -73,11 +76,11 @@ export function VerdictCard({
             className="verdict-prose"
             style={{
               ...proseOverrides,
-              marginTop: 18,
+              marginTop: 22,
               fontFamily: "var(--font-serif)",
-              fontSize: "1.0625rem",
+              fontSize: "clamp(1rem, 1.6vw, 1.1875rem)",
               lineHeight: 1.65,
-              maxWidth: "56ch",
+              maxWidth: "62ch",
             }}
           >
             {children}

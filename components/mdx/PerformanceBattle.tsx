@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useContainerWidth } from "@/lib/useContainerWidth";
 
 interface PerformanceBattleProps {
   compact?: boolean;
@@ -18,6 +19,7 @@ interface NormalizedSeries {
   final: number;
 }
 
+const COMPACT_THRESHOLD = 600;
 const STAMP = "var(--stamp)";
 const INK = "var(--ink)";
 const INK_MUTE = "var(--ink-mute)";
@@ -52,15 +54,9 @@ function buildFallback(arr: number[]): NormalizedSeries {
 }
 
 export function PerformanceBattle({ compact }: PerformanceBattleProps = {}) {
-  const [isMobile, setIsMobile] = useState(false);
-  useEffect(() => {
-    const mq = window.matchMedia("(max-width: 640px)");
-    const update = () => setIsMobile(mq.matches);
-    update();
-    mq.addEventListener("change", update);
-    return () => mq.removeEventListener("change", update);
-  }, []);
-  const mobile = compact ?? isMobile;
+  const { ref, width } = useContainerWidth<HTMLDivElement>();
+  const auto = width > 0 && width < COMPACT_THRESHOLD;
+  const mobile = compact ?? auto;
 
   const [veqt, setVeqt] = useState<NormalizedSeries | null>(null);
   const [xeqt, setXeqt] = useState<NormalizedSeries | null>(null);
@@ -104,12 +100,12 @@ export function PerformanceBattle({ compact }: PerformanceBattleProps = {}) {
     };
   }, []);
 
-  const chartH = mobile ? 200 : 280;
-  const chartW = mobile ? 320 : 720;
-  const padL = 60;
-  const padR = 80;
-  const padT = 20;
-  const padB = 32;
+  const chartH = mobile ? 240 : 320;
+  const chartW = mobile ? 360 : 760;
+  const padL = mobile ? 56 : 68;
+  const padR = mobile ? 86 : 96;
+  const padT = 24;
+  const padB = 34;
   const innerW = chartW - padL - padR;
   const innerH = chartH;
 
@@ -137,7 +133,7 @@ export function PerformanceBattle({ compact }: PerformanceBattleProps = {}) {
   };
 
   const grids = [1.0, 1.25, 1.5, 1.75];
-  const xTicks = mobile
+  const xTicks: [number, string][] = mobile
     ? [
         [0, "'21"],
         [0.5, "'23"],
@@ -156,8 +152,8 @@ export function PerformanceBattle({ compact }: PerformanceBattleProps = {}) {
     `$${Math.round(10000 * v).toLocaleString("en-CA")}`;
 
   return (
-    <div className="my-10" style={{ fontFamily: "var(--font-sans)" }}>
-      <div style={{ marginBottom: 22 }}>
+    <div ref={ref} className="flagship-bleed my-10" style={{ fontFamily: "var(--font-sans)" }}>
+      <div style={{ marginBottom: 24 }}>
         <p className="ed-label" style={{ margin: 0 }}>
           Five-year battle · $10,000 invested
         </p>
@@ -166,10 +162,10 @@ export function PerformanceBattle({ compact }: PerformanceBattleProps = {}) {
             fontFamily: "var(--font-display)",
             fontWeight: 500,
             fontStyle: "italic",
-            fontSize: mobile ? 24 : 32,
+            fontSize: mobile ? "clamp(22px, 6vw, 26px)" : "clamp(28px, 3.4vw, 34px)",
             lineHeight: 1.05,
             letterSpacing: "-0.018em",
-            margin: "8px 0 0",
+            margin: "10px 0 0",
             color: "var(--ink)",
           }}
         >
@@ -181,7 +177,7 @@ export function PerformanceBattle({ compact }: PerformanceBattleProps = {}) {
         style={{
           background: PAPER_LIGHT,
           border: "1px solid var(--ink)",
-          padding: mobile ? "22px 16px" : "28px 32px",
+          padding: mobile ? "24px 18px" : "30px 32px",
         }}
       >
         {loading ? (
@@ -218,9 +214,9 @@ export function PerformanceBattle({ compact }: PerformanceBattleProps = {}) {
                   y={yScale(v) + 4}
                   textAnchor="end"
                   fontFamily="var(--font-sans)"
-                  fontSize="10"
+                  fontSize="11"
                   fontWeight={600}
-                  letterSpacing="0.06em"
+                  letterSpacing="0.04em"
                   fill={INK_MUTE}
                 >
                   {fmtUSD(v)}
@@ -231,13 +227,13 @@ export function PerformanceBattle({ compact }: PerformanceBattleProps = {}) {
             {xTicks.map(([t, label]) => (
               <text
                 key={String(label)}
-                x={xScale(t as number)}
-                y={chartH + padT + 20}
+                x={xScale(t)}
+                y={chartH + padT + 22}
                 textAnchor="middle"
                 fontFamily="var(--font-sans)"
-                fontSize="10"
+                fontSize="11"
                 fontWeight={600}
-                letterSpacing="0.06em"
+                letterSpacing="0.04em"
                 fill={INK_MUTE}
               >
                 {label}
@@ -281,11 +277,11 @@ export function PerformanceBattle({ compact }: PerformanceBattleProps = {}) {
                   stroke={PAPER_LIGHT}
                   strokeWidth="2.5"
                 />
-                <g transform={`translate(${xScale(1) + 10}, ${yScale(veqt.final) - 4})`}>
+                <g transform={`translate(${xScale(1) + 10}, ${yScale(veqt.final) - 6})`}>
                   <text fontFamily="var(--font-sans)" fontSize="11" fontWeight={700} letterSpacing="0.04em" fill={STAMP}>
                     VEQT
                   </text>
-                  <text x="0" y="14" fontFamily="var(--font-display)" fontSize="14" fontWeight={500} fill={STAMP}>
+                  <text x="0" y="16" fontFamily="var(--font-display)" fontSize="16" fontWeight={500} fill={STAMP}>
                     {fmtUSD(veqt.final)}
                   </text>
                 </g>
@@ -301,11 +297,11 @@ export function PerformanceBattle({ compact }: PerformanceBattleProps = {}) {
                   stroke={PAPER_LIGHT}
                   strokeWidth="2.5"
                 />
-                <g transform={`translate(${xScale(1) + 10}, ${yScale(xeqt.final) + 16})`}>
+                <g transform={`translate(${xScale(1) + 10}, ${yScale(xeqt.final) + 18})`}>
                   <text fontFamily="var(--font-sans)" fontSize="11" fontWeight={700} letterSpacing="0.04em" fill={INK}>
                     XEQT
                   </text>
-                  <text x="0" y="14" fontFamily="var(--font-display)" fontSize="14" fontWeight={500} fill={INK}>
+                  <text x="0" y="16" fontFamily="var(--font-display)" fontSize="16" fontWeight={500} fill={INK}>
                     {fmtUSD(xeqt.final)}
                   </text>
                 </g>
@@ -316,12 +312,12 @@ export function PerformanceBattle({ compact }: PerformanceBattleProps = {}) {
 
         <div
           style={{
-            marginTop: 6,
-            paddingTop: 18,
+            marginTop: 12,
+            paddingTop: 22,
             borderTop: `1px solid ${RULE_SOFT}`,
             display: "grid",
             gridTemplateColumns: mobile ? "1fr 1fr" : "repeat(4, 1fr)",
-            gap: 14,
+            gap: mobile ? 16 : 18,
           }}
         >
           {[
@@ -331,18 +327,19 @@ export function PerformanceBattle({ compact }: PerformanceBattleProps = {}) {
             { l: "Correlation", v: "0.99", tone: INK, sub: "they’re twins" },
           ].map((s) => (
             <div key={s.l}>
-              <div className="ed-label" style={{ fontSize: 9.5, margin: 0 }}>
+              <div className="ed-label" style={{ fontSize: 10, margin: 0 }}>
                 {s.l}
               </div>
               <div
                 style={{
                   fontFamily: "var(--font-display)",
                   fontWeight: 500,
-                  fontSize: mobile ? 20 : 24,
-                  marginTop: 4,
+                  fontSize: mobile ? 22 : 28,
+                  marginTop: 6,
                   color: s.tone,
                   fontVariantNumeric: "tabular-nums",
                   letterSpacing: "-0.012em",
+                  lineHeight: 1.05,
                 }}
               >
                 {s.v}
@@ -352,9 +349,9 @@ export function PerformanceBattle({ compact }: PerformanceBattleProps = {}) {
                   style={{
                     fontFamily: "var(--font-serif)",
                     fontStyle: "italic",
-                    fontSize: 11.5,
+                    fontSize: 12.5,
                     color: INK_MUTE,
-                    marginTop: 2,
+                    marginTop: 4,
                   }}
                 >
                   {s.sub}
@@ -369,10 +366,10 @@ export function PerformanceBattle({ compact }: PerformanceBattleProps = {}) {
         style={{
           fontFamily: "var(--font-serif)",
           fontStyle: "italic",
-          fontSize: 13.5,
-          lineHeight: 1.55,
+          fontSize: 15,
+          lineHeight: 1.6,
           color: INK_MUTE,
-          marginTop: 14,
+          marginTop: 18,
           marginBottom: 0,
           maxWidth: "64ch",
         }}

@@ -1,28 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useContainerWidth } from "@/lib/useContainerWidth";
 
 interface OwnershipLoopProps {
   compact?: boolean;
 }
 
+const COMPACT_THRESHOLD = 600;
+
 export function OwnershipLoop({ compact }: OwnershipLoopProps = {}) {
-  const [isMobile, setIsMobile] = useState(false);
-  useEffect(() => {
-    const mq = window.matchMedia("(max-width: 640px)");
-    const update = () => setIsMobile(mq.matches);
-    update();
-    mq.addEventListener("change", update);
-    return () => mq.removeEventListener("change", update);
-  }, []);
-  const mobile = compact ?? isMobile;
+  const { ref, width } = useContainerWidth<HTMLDivElement>();
+  const auto = width > 0 && width < COMPACT_THRESHOLD;
+  const mobile = compact ?? auto;
 
   return (
-    <div
-      className="my-10"
-      style={{ fontFamily: "var(--font-sans)" }}
-    >
-      <div style={{ marginBottom: 22 }}>
+    <div ref={ref} className="flagship-bleed my-10" style={{ fontFamily: "var(--font-sans)" }}>
+      <div style={{ marginBottom: 24 }}>
         <p className="ed-label" style={{ margin: 0 }}>
           The Ownership Loop · who answers to whom
         </p>
@@ -31,10 +24,10 @@ export function OwnershipLoop({ compact }: OwnershipLoopProps = {}) {
             fontFamily: "var(--font-display)",
             fontWeight: 500,
             fontStyle: "italic",
-            fontSize: mobile ? 24 : 32,
+            fontSize: mobile ? "clamp(22px, 6vw, 26px)" : "clamp(28px, 3.4vw, 34px)",
             lineHeight: 1.05,
             letterSpacing: "-0.018em",
-            margin: "8px 0 0",
+            margin: "10px 0 0",
             color: "var(--ink)",
           }}
         >
@@ -54,7 +47,7 @@ export function OwnershipLoop({ compact }: OwnershipLoopProps = {}) {
         {/* Vanguard panel */}
         <div
           style={{
-            padding: mobile ? "26px 22px 28px" : "30px 32px 32px",
+            padding: mobile ? "28px 22px 30px" : "32px 30px 34px",
             borderRight: mobile ? "none" : "1px solid var(--ink)",
             borderBottom: mobile ? "1px solid var(--ink)" : "none",
             position: "relative",
@@ -75,14 +68,14 @@ export function OwnershipLoop({ compact }: OwnershipLoopProps = {}) {
               display: "flex",
               alignItems: "baseline",
               gap: 10,
-              marginBottom: 4,
+              marginBottom: 6,
             }}
           >
             <span
               style={{
                 fontFamily: "var(--font-display)",
                 fontWeight: 500,
-                fontSize: 26,
+                fontSize: 28,
                 letterSpacing: "-0.01em",
                 color: "var(--ink)",
               }}
@@ -92,13 +85,13 @@ export function OwnershipLoop({ compact }: OwnershipLoopProps = {}) {
             <span
               style={{
                 fontFamily: "var(--font-sans)",
-                fontSize: 9.5,
+                fontSize: 10,
                 fontWeight: 700,
                 letterSpacing: "0.22em",
                 textTransform: "uppercase",
                 color: "var(--stamp)",
                 border: "1px solid var(--stamp)",
-                padding: "2px 6px",
+                padding: "3px 7px",
                 borderRadius: 2,
               }}
             >
@@ -109,9 +102,10 @@ export function OwnershipLoop({ compact }: OwnershipLoopProps = {}) {
             style={{
               fontFamily: "var(--font-serif)",
               fontStyle: "italic",
-              fontSize: 13.5,
+              fontSize: 15,
               color: "var(--ink-mute)",
               margin: "0 0 22px",
+              lineHeight: 1.4,
             }}
           >
             No ticker. No outside shareholders.
@@ -120,7 +114,7 @@ export function OwnershipLoop({ compact }: OwnershipLoopProps = {}) {
           <div
             style={{
               position: "relative",
-              height: mobile ? 240 : 280,
+              height: mobile ? 260 : 300,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -178,20 +172,20 @@ export function OwnershipLoop({ compact }: OwnershipLoopProps = {}) {
 
               <g>
                 <rect x="135" y="22" width="90" height="40" fill="var(--ink)" stroke="var(--ink)" strokeWidth="1.5" />
-                <text x="180" y="40" textAnchor="middle" fontFamily="var(--font-sans)" fontSize="9.5" fontWeight="700" letterSpacing="0.18em" fill="var(--paper)">YOU</text>
-                <text x="180" y="53" textAnchor="middle" fontFamily="var(--font-serif)" fontStyle="italic" fontSize="11" fill="var(--paper)" opacity="0.75">the investor</text>
+                <text x="180" y="40" textAnchor="middle" fontFamily="var(--font-sans)" fontSize="10" fontWeight="700" letterSpacing="0.18em" fill="var(--paper)">YOU</text>
+                <text x="180" y="54" textAnchor="middle" fontFamily="var(--font-serif)" fontStyle="italic" fontSize="12" fill="var(--paper)" opacity="0.78">the investor</text>
               </g>
 
               <g>
                 <rect x="135" y="120" width="90" height="40" fill="var(--paper-light)" stroke="var(--ink)" strokeWidth="1.5" />
-                <text x="180" y="138" textAnchor="middle" fontFamily="var(--font-sans)" fontSize="9.5" fontWeight="700" letterSpacing="0.18em" fill="var(--ink)">VEQT</text>
-                <text x="180" y="151" textAnchor="middle" fontFamily="var(--font-serif)" fontStyle="italic" fontSize="11" fill="var(--ink-mute)">the fund</text>
+                <text x="180" y="138" textAnchor="middle" fontFamily="var(--font-sans)" fontSize="10" fontWeight="700" letterSpacing="0.18em" fill="var(--ink)">VEQT</text>
+                <text x="180" y="152" textAnchor="middle" fontFamily="var(--font-serif)" fontStyle="italic" fontSize="12" fill="var(--ink-mute)">the fund</text>
               </g>
 
               <g>
                 <rect x="115" y="218" width="130" height="40" fill="var(--paper-light)" stroke="var(--ink)" strokeWidth="1.5" />
-                <text x="180" y="236" textAnchor="middle" fontFamily="var(--font-sans)" fontSize="9.5" fontWeight="700" letterSpacing="0.18em" fill="var(--ink)">VANGUARD</text>
-                <text x="180" y="249" textAnchor="middle" fontFamily="var(--font-serif)" fontStyle="italic" fontSize="11" fill="var(--ink-mute)">the manager</text>
+                <text x="180" y="236" textAnchor="middle" fontFamily="var(--font-sans)" fontSize="10" fontWeight="700" letterSpacing="0.18em" fill="var(--ink)">VANGUARD</text>
+                <text x="180" y="250" textAnchor="middle" fontFamily="var(--font-serif)" fontStyle="italic" fontSize="12" fill="var(--ink-mute)">the manager</text>
               </g>
 
               <path d="M 180,68 L 180,114" stroke="var(--ink)" strokeWidth="2" fill="none" markerEnd="url(#vg-arrow-ink)" />
@@ -206,9 +200,9 @@ export function OwnershipLoop({ compact }: OwnershipLoopProps = {}) {
                 strokeLinecap="round"
               />
 
-              <text x="200" y="92" fontFamily="var(--font-sans)" fontSize="9.5" fontWeight="700" letterSpacing="0.16em" fill="var(--ink-mute)">$200/yr</text>
-              <text x="200" y="190" fontFamily="var(--font-sans)" fontSize="9.5" fontWeight="700" letterSpacing="0.16em" fill="var(--ink-mute)">MER</text>
-              <text fontFamily="var(--font-serif)" fontStyle="italic" fontSize="11" fill="var(--stamp)">
+              <text x="234" y="94" fontFamily="var(--font-sans)" fontSize="10" fontWeight="700" letterSpacing="0.16em" fill="var(--ink-mute)">$200/yr</text>
+              <text x="234" y="192" fontFamily="var(--font-sans)" fontSize="10" fontWeight="700" letterSpacing="0.16em" fill="var(--ink-mute)">MER</text>
+              <text fontFamily="var(--font-serif)" fontStyle="italic" fontSize="12" fill="var(--stamp)">
                 <tspan x="58" y="158">closes</tspan>
                 <tspan x="58" dy="14">the loop</tspan>
               </text>
@@ -218,10 +212,10 @@ export function OwnershipLoop({ compact }: OwnershipLoopProps = {}) {
           <p
             style={{
               fontFamily: "var(--font-serif)",
-              fontSize: 14,
+              fontSize: 15.5,
               lineHeight: 1.6,
               color: "var(--ink-soft)",
-              marginTop: 12,
+              marginTop: 16,
               marginBottom: 0,
             }}
           >
@@ -238,17 +232,17 @@ export function OwnershipLoop({ compact }: OwnershipLoopProps = {}) {
         {/* BlackRock panel */}
         <div
           style={{
-            padding: mobile ? "26px 22px 28px" : "30px 32px 32px",
+            padding: mobile ? "28px 22px 30px" : "32px 30px 34px",
             position: "relative",
-            background: "color-mix(in oklab, var(--ink) 3%, transparent)",
+            background: "color-mix(in oklab, var(--ink) 4%, transparent)",
           }}
         >
-          <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 4 }}>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 6 }}>
             <span
               style={{
                 fontFamily: "var(--font-display)",
                 fontWeight: 500,
-                fontSize: 26,
+                fontSize: 28,
                 letterSpacing: "-0.01em",
                 color: "var(--ink)",
               }}
@@ -258,13 +252,13 @@ export function OwnershipLoop({ compact }: OwnershipLoopProps = {}) {
             <span
               style={{
                 fontFamily: "var(--font-sans)",
-                fontSize: 9.5,
+                fontSize: 10,
                 fontWeight: 700,
                 letterSpacing: "0.22em",
                 textTransform: "uppercase",
                 color: "var(--ink-mute)",
                 border: "1px solid var(--ink-mute)",
-                padding: "2px 6px",
+                padding: "3px 7px",
                 borderRadius: 2,
               }}
             >
@@ -275,15 +269,16 @@ export function OwnershipLoop({ compact }: OwnershipLoopProps = {}) {
             style={{
               fontFamily: "var(--font-serif)",
               fontStyle: "italic",
-              fontSize: 13.5,
+              fontSize: 15,
               color: "var(--ink-mute)",
               margin: "0 0 22px",
+              lineHeight: 1.4,
             }}
           >
             Publicly traded. $12T under management. Two masters.
           </p>
 
-          <div style={{ position: "relative", height: mobile ? 240 : 280 }}>
+          <div style={{ position: "relative", height: mobile ? 260 : 300 }}>
             <svg
               width="100%"
               height="100%"
@@ -303,20 +298,20 @@ export function OwnershipLoop({ compact }: OwnershipLoopProps = {}) {
 
               <g>
                 <rect x="135" y="218" width="90" height="40" fill="var(--ink)" stroke="var(--ink)" strokeWidth="1.5" />
-                <text x="180" y="236" textAnchor="middle" fontFamily="var(--font-sans)" fontSize="9.5" fontWeight="700" letterSpacing="0.18em" fill="var(--paper)">YOU</text>
-                <text x="180" y="249" textAnchor="middle" fontFamily="var(--font-serif)" fontStyle="italic" fontSize="11" fill="var(--paper)" opacity="0.75">the investor</text>
+                <text x="180" y="236" textAnchor="middle" fontFamily="var(--font-sans)" fontSize="10" fontWeight="700" letterSpacing="0.18em" fill="var(--paper)">YOU</text>
+                <text x="180" y="250" textAnchor="middle" fontFamily="var(--font-serif)" fontStyle="italic" fontSize="12" fill="var(--paper)" opacity="0.78">the investor</text>
               </g>
 
               <g>
                 <rect x="135" y="150" width="90" height="40" fill="var(--paper-light)" stroke="var(--ink)" strokeWidth="1.5" />
-                <text x="180" y="168" textAnchor="middle" fontFamily="var(--font-sans)" fontSize="9.5" fontWeight="700" letterSpacing="0.18em" fill="var(--ink)">XEQT</text>
-                <text x="180" y="181" textAnchor="middle" fontFamily="var(--font-serif)" fontStyle="italic" fontSize="11" fill="var(--ink-mute)">the fund</text>
+                <text x="180" y="168" textAnchor="middle" fontFamily="var(--font-sans)" fontSize="10" fontWeight="700" letterSpacing="0.18em" fill="var(--ink)">XEQT</text>
+                <text x="180" y="182" textAnchor="middle" fontFamily="var(--font-serif)" fontStyle="italic" fontSize="12" fill="var(--ink-mute)">the fund</text>
               </g>
 
               <g>
                 <rect x="115" y="82" width="130" height="40" fill="var(--paper-light)" stroke="var(--ink)" strokeWidth="1.5" />
-                <text x="180" y="100" textAnchor="middle" fontFamily="var(--font-sans)" fontSize="9.5" fontWeight="700" letterSpacing="0.18em" fill="var(--ink)">BLACKROCK</text>
-                <text x="180" y="113" textAnchor="middle" fontFamily="var(--font-serif)" fontStyle="italic" fontSize="11" fill="var(--ink-mute)">the manager</text>
+                <text x="180" y="100" textAnchor="middle" fontFamily="var(--font-sans)" fontSize="10" fontWeight="700" letterSpacing="0.18em" fill="var(--ink)">BLACKROCK</text>
+                <text x="180" y="114" textAnchor="middle" fontFamily="var(--font-serif)" fontStyle="italic" fontSize="12" fill="var(--ink-mute)">the manager</text>
               </g>
 
               <g>
@@ -347,19 +342,19 @@ export function OwnershipLoop({ compact }: OwnershipLoopProps = {}) {
               <path d="M 180,82 L 180,60" stroke="var(--ink-mute)" strokeWidth="2" fill="none" markerEnd="url(#br-arrow-mute)" />
               <path d="M 220,82 L 250,60" stroke="var(--ink-mute)" strokeWidth="2" fill="none" markerEnd="url(#br-arrow-mute)" />
 
-              <text x="200" y="208" fontFamily="var(--font-sans)" fontSize="9.5" fontWeight="700" letterSpacing="0.16em" fill="var(--ink-mute)">$200/yr</text>
-              <text x="200" y="140" fontFamily="var(--font-sans)" fontSize="9.5" fontWeight="700" letterSpacing="0.16em" fill="var(--ink-mute)">MER</text>
-              <text x="68" y="74" fontFamily="var(--font-serif)" fontStyle="italic" fontSize="11" fill="var(--ink-mute)">profits flow out</text>
+              <text x="234" y="208" fontFamily="var(--font-sans)" fontSize="10" fontWeight="700" letterSpacing="0.16em" fill="var(--ink-mute)">$200/yr</text>
+              <text x="234" y="140" fontFamily="var(--font-sans)" fontSize="10" fontWeight="700" letterSpacing="0.16em" fill="var(--ink-mute)">MER</text>
+              <text x="68" y="74" fontFamily="var(--font-serif)" fontStyle="italic" fontSize="12" fill="var(--ink-mute)">profits flow out</text>
             </svg>
           </div>
 
           <p
             style={{
               fontFamily: "var(--font-serif)",
-              fontSize: 14,
+              fontSize: 15.5,
               lineHeight: 1.6,
               color: "var(--ink-soft)",
-              marginTop: 12,
+              marginTop: 16,
               marginBottom: 0,
             }}
           >
@@ -371,16 +366,15 @@ export function OwnershipLoop({ compact }: OwnershipLoopProps = {}) {
         </div>
       </div>
 
-      {/* Takeaway band — discipline color, hardcoded like Card dark */}
       <div
         style={{
           marginTop: -1,
-          padding: mobile ? "22px 22px" : "26px 32px",
+          padding: mobile ? "22px 22px 24px" : "28px 32px",
           background: "#0f0d0a",
           color: "#f6efdc",
           display: "grid",
-          gridTemplateColumns: mobile ? "1fr" : "1fr 2fr",
-          gap: 18,
+          gridTemplateColumns: mobile ? "1fr" : "minmax(0, 1fr) minmax(0, 2fr)",
+          gap: mobile ? 12 : 22,
           alignItems: "center",
         }}
       >
@@ -403,25 +397,23 @@ export function OwnershipLoop({ compact }: OwnershipLoopProps = {}) {
               fontFamily: "var(--font-display)",
               fontWeight: 500,
               fontStyle: "italic",
-              fontSize: mobile ? 19 : 22,
-              lineHeight: 1.15,
+              fontSize: mobile ? 22 : 26,
+              lineHeight: 1.12,
               marginTop: 6,
               marginBottom: 0,
               letterSpacing: "-0.015em",
               color: "#f6efdc",
             }}
           >
-            One company has
-            <br />
-            one master.
+            One company has<br />one master.
           </p>
         </div>
         <p
           style={{
             fontFamily: "var(--font-serif)",
-            fontSize: 14.5,
+            fontSize: 15.5,
             lineHeight: 1.6,
-            color: "rgba(246,239,220,0.85)",
+            color: "rgba(246,239,220,0.86)",
             margin: 0,
           }}
         >
