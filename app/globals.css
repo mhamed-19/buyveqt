@@ -1813,6 +1813,20 @@ body::after {
   margin: 1.25rem 0;
   font-size: 14px;
 }
+
+/* Flagship widgets bleed out of the 32rem prose cap on desktop, taking
+   the full grid-column width. Mobile keeps the cap so widgets stay
+   aligned with the article body. */
+.flagship-bleed {
+  width: 100%;
+}
+@media (min-width: 1024px) {
+  .flagship-bleed {
+    width: calc(100% + var(--bleed-x, 96px));
+    margin-left: calc(var(--bleed-x, 96px) * -0.5);
+    margin-right: calc(var(--bleed-x, 96px) * -0.5);
+  }
+}
 .learn-article th,
 .learn-article td {
   padding: 0.5rem 0.75rem;
